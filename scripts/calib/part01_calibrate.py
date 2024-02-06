@@ -1,3 +1,4 @@
+from pathlib import Path
 from cate import astra as cate_astra
 from scripts.calib.util import *
 from scripts.settings import *
@@ -50,10 +51,12 @@ for t in t_annotated:
 
 
 """ 2. Annotate the projections, for a description of markers, see `util.py`"""
+res_path = Path(__file__).parent / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
     fname=MAIN_DIR,
+    resource_path=res_path,
     cameras=[1, 2, 3],
     open_annotator=False,  # set to `True` if images have not been annotated
     vmin=6.0,

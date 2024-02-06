@@ -138,6 +138,7 @@ def annotated_data(
     projs_path: str,
     times: Sequence,
     fname: str,
+    resource_path: str,
     cameras: Sequence = (1, 2, 3),
     open_annotator: bool = False,
     vmin=None,
@@ -155,7 +156,7 @@ def annotated_data(
         for t in times:
             # open a EntityLocations class for this file, in the
             points = DelftNeedleEntityLocations(
-                f"resources/{fname}_cam{cam}.npy",
+                f"{resource_path}/{fname}_cam{cam}.npy",
                 t)
             if open_annotator:
                 projs = _load_projs(projs_path, t_range=range(t, t + 1),
