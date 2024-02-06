@@ -18,6 +18,7 @@ memory = Memory(cachedir, verbose=0)
 
 def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
     import astra
+    import astra.experimental
 
     proj_cfg = {
         "type": "cuda3d",
