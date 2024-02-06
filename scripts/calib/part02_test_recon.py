@@ -10,12 +10,14 @@ from scripts.settings import *
 detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
                                DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT)
 
+CALIB_FOLDER = Path(__file__).parent
+
 # directory of the calibration scan
-DATA_DIR_CALIB = "/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
+DATA_DIR_CALIB = "U:\Xray RPT ChemE\X-ray\Xray_data\\2023-02-10 Sophia SBI"
 MAIN_DIR_CALIB = "pre_proc_VROI500_1000_Cal_20degsec"
 
 # directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = "/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
+DATA_DIR = "U:\Xray RPT ChemE\X-ray\Xray_data\\2023-02-10 Sophia SBI"
 MAIN_DIR = "pre_proc_VROI500_1000_Cal_20degsec"
 PROJS_PATH = f'{DATA_DIR}/{MAIN_DIR}'
 
@@ -42,13 +44,15 @@ t = [497, 958, 1223]
 t_annotated = [497, 958, 1223]
 
 # restore calibration
-multicam_geom = np.load(f'multicam_geom_{POSTFIX}.npy', allow_pickle=True)
-markers = np.load(f'markers_{POSTFIX}.npy', allow_pickle=True).item()
+multicam_geom = np.load(f'{CALIB_FOLDER}/multicam_geom_{POSTFIX}.npy', allow_pickle=True)
+markers = np.load(f'{CALIB_FOLDER}/markers_{POSTFIX}.npy', allow_pickle=True).item()
 
+res_path = CALIB_FOLDER / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
     fname=MAIN_DIR,
+    resource_path=res_path,
     cameras=[1, 2, 3],
     open_annotator=False,  # set to `True` if images have not been annotated
     vmin=6.0,
@@ -77,7 +81,7 @@ for cam_id in range(1, 2):
                                ref_full=True)
     projs = prep_projs(projs)
     all_projs.append(projs)
-all_projs = np.concatenate(all_projs, axis=0)
+all_projs = np.concatenate(all_projs, axis=0).swapaxes(0, 1)
 
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
     reco, all_projs, all_geoms, 'FDK', [100 * 3, 100 * 3, 200 * 3], 0.025 * 2)

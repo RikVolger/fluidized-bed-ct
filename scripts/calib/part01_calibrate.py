@@ -37,6 +37,12 @@ elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
     proj_end = 497 + 1371  # this is a guess, I'll optimize rot. angles later
     t_annotated = [497, 958, 1223]
     nr_projs = 1371  # this is just a guess, I'll optimize rot. angles later
+elif MAIN_DIR == "preprocessed_Alignment_5 (needles)":
+    proj_start = 35
+    proj_end = 1616
+    nr_projs = proj_end - proj_start
+    x = 50  # safety margin for start
+    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
 else:
     raise Exception()
 for t in t_annotated:
