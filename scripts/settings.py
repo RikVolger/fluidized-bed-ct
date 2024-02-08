@@ -1,6 +1,7 @@
 import copy
 import os
 from pathlib import Path
+import warnings
 
 from fbrct.scan import (
     StaticScan,
@@ -12,14 +13,23 @@ from fbrct.scan import (
 
 SOURCE_RADIUS = 94.5
 DETECTOR_RADIUS = 27.0
-DETECTOR_COLS = 500  # including ROI
-DETECTOR_ROWS = 1548  # including ROI
-DETECTOR_COLS_SPEC = 1524  # also those outside ROI
-DETECTOR_WIDTH_SPEC = 30.2  # cm, also outside ROI
-DETECTOR_HEIGHT = 30.7  # cm, also outside ROI
-DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS  # cm
+DETECTOR_COLS = 1548  # including ROI
+DETECTOR_ROWS = 1524  # including ROI
+DETECTOR_COLS_SPEC = 1548  # also those outside ROI
+DETECTOR_ROWS_SPEC = 1524  # also those outside ROI
+DETECTOR_WIDTH_SPEC = 30.7   # cm, also outside ROI
+DETECTOR_HEIGHT_SPEC = 30.2  # cm, also outside ROI
+DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS       # cm
+DETECTOR_HEIGHT = DETECTOR_HEIGHT_SPEC / DETECTOR_ROWS_SPEC * DETECTOR_ROWS     # cm
 DETECTOR_PIXEL_WIDTH = DETECTOR_WIDTH / DETECTOR_COLS
 DETECTOR_PIXEL_HEIGHT = DETECTOR_HEIGHT / DETECTOR_ROWS
+DETECTOR_PIXEL_SPEC = 198e-4    # cm
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_HEIGHT < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel height ({DETECTOR_PIXEL_HEIGHT:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_WIDTH < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel width ({DETECTOR_PIXEL_WIDTH:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
 APPROX_VOXEL_WIDTH = (
     DETECTOR_PIXEL_WIDTH / (SOURCE_RADIUS + DETECTOR_RADIUS) * SOURCE_RADIUS)
 APPROX_VOXEL_HEIGHT = (
