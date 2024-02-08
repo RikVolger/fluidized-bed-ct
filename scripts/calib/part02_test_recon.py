@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import pyqtgraph as pq
+import numpy as np
+from pathlib import Path
 
 import cate.astra as cate_astra
-from cate.util import plot_projected_markers
+from cate.util import geoms_from_interpolation
 from fbrct.reco import AstraReconstruction
 from scripts.calib.util import *
 from scripts.settings import *
@@ -13,7 +15,7 @@ detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
 CALIB_FOLDER = Path(__file__).parent
 
 # directory of the calibration scan
-DATA_DIR_CALIB = "U:\Xray RPT ChemE\X-ray\Xray_data\\2023-02-10 Sophia SBI"
+DATA_DIR_CALIB = R"U:\Xray RPT ChemE\X-ray\Xray_data\2023-02-10 Sophia SBI"
 MAIN_DIR_CALIB = "pre_proc_VROI500_1000_Cal_20degsec"
 
 # directory of a scan to reconstruct (can be different or same to calib)
@@ -33,19 +35,24 @@ elif MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
     ref_path = '/home/adriaan/ownCloud3/pre_proc_Brightfield'
     nr_projs = proj_end - proj_start
 elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
-    nr_projs = 1371  # a guess
+    proj_start = 45
+    proj_end = 1400
+    t_annotated = [50, 501, 953]
+    nr_projs = proj_end - proj_start
+    t_range = range(proj_start, proj_start + nr_projs, 6)
 else:
     raise Exception()
 
 # postfix of stored claibration
-POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_13june2023'
+POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_06feb2024'
 
-t = [497, 958, 1223]
-t_annotated = [497, 958, 1223]
+t = t_annotated
+# t = [497, 958, 1223]
+# t_annotated = [497, 958, 1223]
 
 # restore calibration
-multicam_geom = np.load(f'{CALIB_FOLDER}/multicam_geom_{POSTFIX}.npy', allow_pickle=True)
-markers = np.load(f'{CALIB_FOLDER}/markers_{POSTFIX}.npy', allow_pickle=True).item()
+multicam_geom = np.load(f'{CALIB_FOLDER}/resources/multicam_geom_{POSTFIX}.npy', allow_pickle=True)
+markers = np.load(f'{CALIB_FOLDER}/resources/markers_{POSTFIX}.npy', allow_pickle=True).item()
 
 res_path = CALIB_FOLDER / "resources"
 multicam_data = annotated_data(
@@ -70,26 +77,27 @@ reco = AstraReconstruction(PROJS_PATH, detector_cropped.todict())
 
 all_geoms = []
 all_projs = []
-for cam_id in range(1, 2):
-    # geoms_interp = geoms_from_interpolation(
-    #     interpolation_geoms=multicam_geom[cam_id - 1],
-    #     interpolation_nrs=t,
-    #     interpolation_calibration_nrs=t_annotated,
-    #     plot=False)
-    all_geoms.extend(multicam_geom[cam_id - 1])
-    projs = reco.load_sinogram(t_range=t, cameras=[cam_id],
-                               ref_full=True)
+for cam_id in range(1, 4):
+    geoms_interp = geoms_from_interpolation(
+        interpolation_geoms=multicam_geom[cam_id - 1],
+        interpolation_nrs=t_range,
+        interpolation_calibration_nrs=t_annotated,
+        plot=False)
+    all_geoms.extend(geoms_interp)
+    projs = reco.load_sinogram(t_range=t_range, cameras=[cam_id],
+                               ref_full=False)
     projs = prep_projs(projs)
     all_projs.append(projs)
-all_projs = np.concatenate(all_projs, axis=0).swapaxes(0, 1)
+all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
 
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
-    reco, all_projs, all_geoms, 'FDK', [100 * 3, 100 * 3, 200 * 3], 0.025 * 2)
+    reco, all_projs, all_geoms, 'fdk', [100 * 3, 100 * 3, 200 * 3], 0.025 * 2)
 x = reco.volume(vol_id)
 x = np.transpose(x, (2, 1, 0))
 print(x.shape)
 pq.image(x)
 plt.figure()
+plt.imshow(x[300, :, :])
 plt.show()
 
 for res_cam_id in range(1, 4):

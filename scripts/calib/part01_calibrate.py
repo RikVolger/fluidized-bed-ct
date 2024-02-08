@@ -1,3 +1,4 @@
+import numpy as np
 from pathlib import Path
 from cate import astra as cate_astra
 from scripts.calib.util import *
@@ -9,10 +10,10 @@ detector = cate_astra.Detector(
 
 
 """ 1. Choose a directory, and find the range of motion in the projections."""
-DATA_DIR = "/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
+DATA_DIR = R"U:\Xray RPT ChemE\X-ray\Xray_data\2023-02-10 Sophia SBI"
 MAIN_DIR = "pre_proc_VROI500_1000_Cal_20degsec"
 PROJS_PATH = f"{DATA_DIR}/{MAIN_DIR}"
-POSTFIX = f"{MAIN_DIR}_calibrated_on_13june2023"  # set this value
+POSTFIX = f"{MAIN_DIR}_calibrated_on_06feb2024"  # set this value
 
 if MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
     # first frame before motion
@@ -34,10 +35,10 @@ elif MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table534mm":
     t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
     ignore_cols = 0  # det width used is 550
 elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
-    proj_start = 497
-    proj_end = 497 + 1371  # this is a guess, I'll optimize rot. angles later
-    t_annotated = [497, 958, 1223]
-    nr_projs = 1371  # this is just a guess, I'll optimize rot. angles later
+    proj_start = 45
+    proj_end = 1400
+    t_annotated = [50, 501, 953]
+    nr_projs = proj_end - proj_start
 elif MAIN_DIR == "preprocessed_Alignment_5 (needles)":
     proj_start = 35
     proj_end = 1616
@@ -58,7 +59,7 @@ multicam_data = annotated_data(
     fname=MAIN_DIR,
     resource_path=res_path,
     cameras=[1, 2, 3],
-    open_annotator=False,  # set to `True` if images have not been annotated
+    open_annotator=True,  # set to `True` if images have not been annotated
     vmin=6.0,
     vmax=10.0,
 )
@@ -86,11 +87,12 @@ markers = marker_optimization(
     max_nfev=10,
     nr_iters=2
 )
-np.save(f"markers_{POSTFIX}.npy", markers)
+np.save(f"{res_path}/markers_{POSTFIX}.npy", markers)
 
 # calib (export format)
 rotation_0_geoms = {}
 for key, val in zip(multicam_data.keys(), multicam_geom):
     rotation_0_geoms[key] = val[0]._g.asstatic()
-np.save(f"geom_{POSTFIX}.npy", [rotation_0_geoms])
+np.save(f"{res_path}/geom_{POSTFIX}.npy", [rotation_0_geoms])
+np.save(f"{res_path}/multicam_geom_{POSTFIX}.npy", multicam_geom)
 print("Optimalization results saved.")

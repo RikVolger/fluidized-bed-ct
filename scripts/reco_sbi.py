@@ -26,10 +26,11 @@ DETECTOR = {
     "pixel_height": DETECTOR_PIXEL_HEIGHT,
 }
 DATA_DIR = Path(
-    "/run/media/adriaan/Elements/academic/data/ownCloud_Sophia_SBI/VROI500_1000")
+    "U:/Xray RPT ChemE/X-ray/Xray_data/2023-02-10 Sophia SBI")
 CALIBRATION_FILE = str(Path(__file__).parent
                        / "calib"
-                       / "geom_pre_proc_VROI500_1000_Cal_20degsec_calibrated_on_06june2023.npy")
+                       / "resources"
+                       / "geom_pre_proc_VROI500_1000_Cal_20degsec_calibrated_on_06feb2024.npy")
 
 # / "geom_table474mm_26aug2021_amend_pre_proc_3x10mm_foamballs_vertical_wall_31aug2021.npy")
 
@@ -156,7 +157,7 @@ sino = recon.load_sinogram(
 for sino_t in sino:  # go through timeframes one by one
     sino_t = np.fliplr(np.transpose(sino_t, [0, 2, 1]))
     plot_projs(sino_t, subplot_row=True)
-    plt.show()
+    # plt.show()
 
     proj_id, proj_geom = recon.sino_gpu_and_proj_geom(sino_t, scan.geometry())
     vol_id, vol_geom = recon.backward(
@@ -174,6 +175,7 @@ for sino_t in sino:  # go through timeframes one by one
 
     pq.image(x.T)
     plt.figure()
+    plt.imshow(x[:, 100, :])
     plt.show()
 
 # """6. Perform a SIRT reconstruction (experimental - ASTRA KernelKit)"""
