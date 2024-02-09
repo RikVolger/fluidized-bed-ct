@@ -87,6 +87,12 @@ markers = marker_optimization(
     max_nfev=10,
     nr_iters=2
 )
+markers_from_leastsquares_intersection(
+    multicam_geom_flat,
+    multicam_data_flat,
+    optimizable=False,
+    plot=True)
+
 np.save(f"{res_path}/markers_{POSTFIX}.npy", markers)
 
 # calib (export format)
