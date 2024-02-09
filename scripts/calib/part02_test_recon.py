@@ -4,7 +4,8 @@ import numpy as np
 from pathlib import Path
 
 import cate.astra as cate_astra
-from cate.util import geoms_from_interpolation
+import cate.xray as xray
+from cate.util import geoms_from_interpolation, plot_projected_markers
 from fbrct.reco import AstraReconstruction
 from scripts.calib.util import *
 from scripts.settings import *
@@ -67,10 +68,12 @@ multicam_data = annotated_data(
 )
 cate_astra.pixels2coords(multicam_data, detector)  # convert to physical coords
 
-# for d1, d2 in zip(multicam_data[3],
-#                   xray.xray_multigeom_project(multicam_geom, markers)):
-#     plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
-#
+multicam_geom_flat = [g for c in multicam_geom for g in c]
+for cam in range(1, 4):
+    for d1, d2 in zip(multicam_data[cam],
+                    xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
+        plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
+
 
 detector_cropped = cate_astra.crop_detector(detector, 0)
 reco = AstraReconstruction(PROJS_PATH, detector_cropped.todict())
