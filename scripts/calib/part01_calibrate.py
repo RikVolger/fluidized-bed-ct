@@ -10,8 +10,8 @@ detector = cate_astra.Detector(
 
 
 """ 1. Choose a directory, and find the range of motion in the projections."""
-DATA_DIR = R"U:\Xray RPT ChemE\X-ray\Xray_data\2023-02-10 Sophia SBI"
-MAIN_DIR = "pre_proc_VROI500_1000_Cal_20degsec"
+DATA_DIR = R"D:\XRay\2023-11-21 Rik"
+MAIN_DIR = "preprocessed_Alignment_5 (needles)"
 PROJS_PATH = f"{DATA_DIR}/{MAIN_DIR}"
 POSTFIX = f"{MAIN_DIR}_calibrated_on_06feb2024"  # set this value
 
@@ -59,7 +59,7 @@ multicam_data = annotated_data(
     fname=MAIN_DIR,
     resource_path=res_path,
     cameras=[1, 2, 3],
-    open_annotator=True,  # set to `True` if images have not been annotated
+    open_annotator=False,  # set to `True` if images have not been annotated
     vmin=6.0,
     vmax=10.0,
 )

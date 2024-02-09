@@ -15,8 +15,8 @@ detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
 CALIB_FOLDER = Path(__file__).parent
 
 # directory of the calibration scan
-DATA_DIR_CALIB = R"U:\Xray RPT ChemE\X-ray\Xray_data\2023-02-10 Sophia SBI"
-MAIN_DIR_CALIB = "pre_proc_VROI500_1000_Cal_20degsec"
+DATA_DIR_CALIB = R"D:\XRay\2023-11-21 Rik"
+MAIN_DIR_CALIB = "preprocessed_Alignment_5 (needles)"
 
 # directory of a scan to reconstruct (can be different or same to calib)
 DATA_DIR = "U:\Xray RPT ChemE\X-ray\Xray_data\\2023-02-10 Sophia SBI"
