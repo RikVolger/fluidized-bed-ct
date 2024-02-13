@@ -40,7 +40,9 @@ elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
     proj_end = 1400
     t_annotated = [50, 501, 953]
     nr_projs = proj_end - proj_start
-    t_range = range(proj_start, proj_start + nr_projs, 6)
+    n_t_points = 120
+    step_size = int(nr_projs / n_t_points)
+    t_range = range(proj_start, proj_end, step_size)
 else:
     raise Exception()
 
@@ -68,10 +70,9 @@ multicam_data = annotated_data(
 )
 cate_astra.pixels2coords(multicam_data, detector)  # convert to physical coords
 
-multicam_geom_flat = [g for c in multicam_geom for g in c]
 for cam in range(1, 4):
     for d1, d2 in zip(multicam_data[cam],
-                    xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
+                      xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
         plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
 
 
@@ -94,7 +95,7 @@ for cam_id in range(1, 4):
 all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
 
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
-    reco, all_projs, all_geoms, 'fdk', [100 * 3, 100 * 3, 200 * 3], 0.025 * 2)
+    reco, all_projs, all_geoms, 'fdk', [400, 400, 1500], 0.0198)
 x = reco.volume(vol_id)
 x = np.transpose(x, (2, 1, 0))
 print(x.shape)
