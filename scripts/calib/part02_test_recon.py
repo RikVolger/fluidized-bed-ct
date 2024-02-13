@@ -20,8 +20,8 @@ DATA_DIR_CALIB = R"D:\XRay\2023-11-21 Rik"
 MAIN_DIR_CALIB = "preprocessed_Alignment_5 (needles)"
 
 # directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = "U:\Xray RPT ChemE\X-ray\Xray_data\\2023-02-10 Sophia SBI"
-MAIN_DIR = "pre_proc_VROI500_1000_Cal_20degsec"
+DATA_DIR = R"D:\XRay\2023-11-21 Rik"
+MAIN_DIR = "preprocessed_Alignment_5 (needles)"
 PROJS_PATH = f'{DATA_DIR}/{MAIN_DIR}'
 
 # configure which projection range to take
@@ -41,6 +41,13 @@ elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
     t_annotated = [50, 501, 953]
     nr_projs = proj_end - proj_start
     t_range = range(proj_start, proj_start + nr_projs, 6)
+elif MAIN_DIR == "preprocessed_Alignment_5 (needles)":
+    proj_start = 35
+    proj_end = 1616
+    nr_projs = proj_end - proj_start
+    x = 50  # safety margin for start
+    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
+    t_range = range(proj_start, proj_end, 6)
 else:
     raise Exception()
 
@@ -94,7 +101,7 @@ for cam_id in range(1, 4):
 all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
 
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
-    reco, all_projs, all_geoms, 'fdk', [100 * 3, 100 * 3, 200 * 3], 0.025 * 2)
+    reco, all_projs, all_geoms, 'fdk', [200 * 3, 200 * 3, 200 * 3], 0.025 * 2)
 x = reco.volume(vol_id)
 x = np.transpose(x, (2, 1, 0))
 print(x.shape)
