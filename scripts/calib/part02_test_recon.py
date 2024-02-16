@@ -98,7 +98,11 @@ for cam_id in range(1, 4):
                                ref_full=False)
     projs = prep_projs(projs)
     all_projs.append(projs)
-all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
+
+if len(all_projs[0].shape) < 3:
+    all_projs = np.array(all_projs).swapaxes(1, 2)
+else:
+    all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
 
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
     reco, all_projs, all_geoms, 'fdk', [200 * 3, 200 * 3, 200 * 3], 0.025 * 2)
