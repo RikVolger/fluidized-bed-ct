@@ -15,6 +15,7 @@ MAIN_DIR = "preprocessed_Alignment_5 (needles)"
 PROJS_PATH = f"{DATA_DIR}/{MAIN_DIR}"
 POSTFIX = f"{MAIN_DIR}_calibrated_on_06feb2024"  # set this value
 
+t_annotated = None
 if MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
     # first frame before motion
     # 31-32 shows a very tiny bit of motion, but seems insignificant
@@ -44,9 +45,13 @@ elif MAIN_DIR == "preprocessed_Alignment_5 (needles)":
     proj_end = 1616
     nr_projs = proj_end - proj_start
     x = 50  # safety margin for start
-    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
 else:
     raise Exception()
+
+if t_annotated is None:
+    n_annotated = 6
+    t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
+
 for t in t_annotated:
     assert proj_start <= t < proj_end, f"{t} is not within proj start-end."
 
@@ -59,7 +64,7 @@ multicam_data = annotated_data(
     fname=MAIN_DIR,
     resource_path=res_path,
     cameras=[1, 2, 3],
-    open_annotator=False,  # set to `True` if images have not been annotated
+    open_annotator=True,  # set to `True` if images have not been annotated
     vmin=6.0,
     vmax=10.0,
 )
