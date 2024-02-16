@@ -46,8 +46,10 @@ elif MAIN_DIR == "preprocessed_Alignment_5 (needles)":
     proj_end = 1616
     nr_projs = proj_end - proj_start
     x = 50  # safety margin for start
-    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
-    t_range = range(proj_start, proj_end, 6)
+    n_annotated = 6
+    t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
+    t_range = range(proj_start, proj_end, 12)
+    # t_range = np.linspace(proj_start, proj_end, 1, dtype=int)
 else:
     raise Exception()
 
@@ -75,11 +77,10 @@ multicam_data = annotated_data(
 )
 cate_astra.pixels2coords(multicam_data, detector)  # convert to physical coords
 
-multicam_geom_flat = [g for c in multicam_geom for g in c]
-for cam in range(1, 4):
-    for d1, d2 in zip(multicam_data[cam],
-                    xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
-        plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
+# for cam in range(1, 4):
+#     for d1, d2 in zip(multicam_data[cam],
+#                     xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
+#         plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
 
 
 detector_cropped = cate_astra.crop_detector(detector, 0)
@@ -105,7 +106,16 @@ else:
     all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
 
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
-    reco, all_projs, all_geoms, 'fdk', [200 * 3, 200 * 3, 200 * 3], 0.025 * 2)
+    reco,
+    all_projs,
+    all_geoms,
+    'sirt',
+    [int(1500 / 2), int(1500 / 2), int(1500 / 2)],
+    0.02 * 2,
+    max_constraint=1.0,
+    r=int(24/2/0.04),
+    iters=50
+    )
 x = reco.volume(vol_id)
 x = np.transpose(x, (2, 1, 0))
 print(x.shape)

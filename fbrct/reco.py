@@ -324,7 +324,7 @@ class AstraReconstruction(Reconstruction):
         algo = algo.lower()
         if algo == "sirt":
             from fbrct import column_mask
-            col_mask = column_mask(voxels)
+            col_mask = column_mask(voxels, **kwargs)
             col_mask = np.transpose(col_mask, [2, 1, 0])
             mask_id, _ = self.volume_gpu(voxels, voxel_size, col_mask)
             _astra_sirt_algo(
