@@ -80,11 +80,45 @@ dets = [g.detector for g in pre_geoms]
 angles = (np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi
 multicam_geom = triple_camera_circular_geometry(
     srcs, dets, angles=angles, optimize_rotation=True)
-
-
-""" 4. Perform the optimization """
 multicam_geom_flat = [g for c in multicam_geom for g in c]
 multicam_data_flat = [d for c in multicam_data.values() for d in c]
+for cam in range(1, 4):
+    for d1, d2 in zip(multicam_data[cam],
+                      xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
+        plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
+
+for geom in multicam_geom_flat:
+    for param in geom.parameters():
+        if len(param) == 1:
+            if (param.value > 1) or (param.value < -1):
+                playroom = abs(param.value * 0.2)
+                bounds = [
+                    param.value - playroom,
+                    param.value + playroom
+                ]
+                param.bounds = bounds
+            else:
+                param.bounds = [-1*np.pi, 1*np.pi]
+        elif len(param) > 1:
+            if (any(param.value > 1)) or (any(param.value < -1)):
+                playroom = abs(param.value * 0.2)
+                # Give z-coordinate (value_init = 0) 10 cm of play. 
+                # Some other params might get extra play too, but 
+                # c'est la vie. z-coordinate really needs to play.
+                playroom[playroom < 0.2] = 10
+                bounds = [
+                    param.value - playroom,
+                    param.value + playroom
+                ]
+                if any(bounds[0] > bounds[1]):
+                    raise ValueError
+                param.bounds = bounds
+            else:
+                min_bounds = [-1*np.pi] * len(param)
+                max_bounds = [ 1*np.pi] * len(param)
+                param.bounds = [min_bounds, max_bounds]
+
+""" 4. Perform the optimization """
 markers = marker_optimization(
     multicam_geom_flat,
     multicam_data_flat,
