@@ -1,6 +1,8 @@
 import numpy as np
 from pathlib import Path
 from cate import astra as cate_astra
+import cate.xray as xray
+from cate.util import plot_projected_markers
 from scripts.calib.util import *
 from scripts.settings import *
 
@@ -82,6 +84,14 @@ multicam_geom = triple_camera_circular_geometry(
     srcs, dets, angles=angles, optimize_rotation=True)
 multicam_geom_flat = [g for c in multicam_geom for g in c]
 multicam_data_flat = [d for c in multicam_data.values() for d in c]
+
+""" Inspect initial geometry """
+markers = markers_from_leastsquares_intersection(
+            multicam_geom_flat,
+            multicam_data_flat,
+            optimizable=False,
+            plot=True)
+
 for cam in range(1, 4):
     for d1, d2 in zip(multicam_data[cam],
                       xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
@@ -122,10 +132,16 @@ for geom in multicam_geom_flat:
 markers = marker_optimization(
     multicam_geom_flat,
     multicam_data_flat,
-    plot=True,
-    max_nfev=10,
-    nr_iters=2
+    plot=False,
+    max_nfev=20,
+    nr_iters=4
 )
+
+for cam in range(1, 4):
+    for d1, d2 in zip(multicam_data[cam],
+                      xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
+        plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
+
 markers_from_leastsquares_intersection(
     multicam_geom_flat,
     multicam_data_flat,
