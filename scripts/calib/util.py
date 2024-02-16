@@ -174,7 +174,7 @@ def triangle_geom(
     src_rad, det_rad, rotation=False, shift=False, fix_first_det=True,
 ):
     geoms = []
-    for i, src_a in enumerate([0, 2 / 3 * np.pi, 4 / 3 * np.pi]):
+    for i, src_a in enumerate([0, 4 / 3 * np.pi, 2 / 3 * np.pi]):
         det_a = src_a + np.pi  # opposing
         src = src_rad * np.array([np.cos(src_a), np.sin(src_a), 0])
         det = det_rad * np.array([np.cos(det_a), np.sin(det_a), 0])

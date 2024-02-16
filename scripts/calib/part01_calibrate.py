@@ -77,7 +77,7 @@ pre_geoms = triangle_geom(SOURCE_RADIUS, DETECTOR_RADIUS,
                           rotation=False, shift=False)
 srcs = [g.source for g in pre_geoms]
 dets = [g.detector for g in pre_geoms]
-angles = (np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi
+angles = 2 * np.pi - ((np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi)
 multicam_geom = triple_camera_circular_geometry(
     srcs, dets, angles=angles, optimize_rotation=True)
 multicam_geom_flat = [g for c in multicam_geom for g in c]
