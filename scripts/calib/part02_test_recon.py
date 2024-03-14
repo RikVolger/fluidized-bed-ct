@@ -68,7 +68,7 @@ res_path = CALIB_FOLDER / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
-    fname=MAIN_DIR,
+    fname=MAIN_DIR_CALIB,
     resource_path=res_path,
     cameras=[1, 2, 3],
     open_annotator=False,  # set to `True` if images have not been annotated
