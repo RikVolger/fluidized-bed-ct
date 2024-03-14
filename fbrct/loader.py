@@ -103,7 +103,7 @@ def load(
                     f"detector {d} in directory {path}."
                 )
             if verbose:
-                print("Reading ", nested_dict[d][t])
+                tqdm.write(f"Reading {nested_dict[d][t]}")
             # faster but imageio may be easier to install
             ims[t_i, d_i, rows] = \
                 tifffile.imread(nested_dict[d][t], maxworkers=1)[
