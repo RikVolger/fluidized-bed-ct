@@ -114,16 +114,17 @@ if len(all_projs[0].shape) < 3:
 else:
     all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
 
+scaling = 1.5
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
     reco,
     all_projs,
     all_geoms,
     'sirt',
-    [int(1500 / 2), int(1500 / 2), int(1500 / 2)],
-    0.02 * 2,
+    [int(1500/scaling), int(1500/scaling), int(1500/scaling)],
+    0.016 * scaling,
     max_constraint=1.0,
-    r=int(24/2/0.04),
-    iters=50
+    r=int(20/2/(0.016*scaling)),
+    iters=200
     )
 x = reco.volume(vol_id)
 x = np.transpose(x, (2, 1, 0))
