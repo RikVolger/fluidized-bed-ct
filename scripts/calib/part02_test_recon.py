@@ -20,9 +20,9 @@ DATA_DIR_CALIB = R"D:\XRay\2023-11-21 Rik"
 MAIN_DIR_CALIB = "preprocessed_Alignment_5 (needles)"
 
 # directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = R"D:\XRay\2023-11-21 Rik"
-MAIN_DIR = "preprocessed_Alignment_5 (needles)"
-PROJS_PATH = f'{DATA_DIR}/{MAIN_DIR}'
+DATA_DIR = R"D:\XRay\2023-12-04 Rik"
+MAIN_DIR = "preprocessed_c058_0lmin_22Hz"
+PROJS_PATH = f'{DATA_DIR}\{MAIN_DIR}'
 
 # configure which projection range to take
 if MAIN_DIR == "pre_proc_3x10mm_foamballs_vertical_01":
@@ -49,6 +49,15 @@ elif MAIN_DIR == "preprocessed_Alignment_5 (needles)":
     n_annotated = 6
     t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
     t_range = range(proj_start, proj_end, 12)
+    # t_range = np.linspace(proj_start, proj_end, 1, dtype=int)
+elif MAIN_DIR == "preprocessed_c058_0lmin_22Hz":
+    proj_start = 35
+    proj_end = 1616
+    nr_projs = proj_end - proj_start
+    x = 50  # safety margin for start
+    n_annotated = 6
+    t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
+    t_range = [8]
     # t_range = np.linspace(proj_start, proj_end, 1, dtype=int)
 else:
     raise Exception()
