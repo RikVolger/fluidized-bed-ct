@@ -11,14 +11,29 @@ from fbrct.util import plot_projs
 from fbrct import column_mask
 
 """1. Configuration of set-up and calibration"""
-DETECTOR_COLS = 500  # including ROI
-DETECTOR_ROWS = 1548  # including ROI
-DETECTOR_COLS_SPEC = 1524  # also those outside ROI
-DETECTOR_WIDTH_SPEC = 30.2  # cm, also outside ROI
-DETECTOR_HEIGHT = 30.7  # cm, also outside ROI
-DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS  # cm
+SOURCE_RADIUS = 94.5
+DETECTOR_RADIUS = 27.0
+DETECTOR_COLS = 1548  # including ROI
+DETECTOR_ROWS = 1524  # including ROI
+DETECTOR_COLS_SPEC = 1548  # also those outside ROI
+DETECTOR_ROWS_SPEC = 1524  # also those outside ROI
+DETECTOR_WIDTH_SPEC = 30.7   # cm, also outside ROI
+DETECTOR_HEIGHT_SPEC = 30.2  # cm, also outside ROI
+DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS       # cm
+DETECTOR_HEIGHT = DETECTOR_HEIGHT_SPEC / DETECTOR_ROWS_SPEC * DETECTOR_ROWS     # cm
 DETECTOR_PIXEL_WIDTH = DETECTOR_WIDTH / DETECTOR_COLS
 DETECTOR_PIXEL_HEIGHT = DETECTOR_HEIGHT / DETECTOR_ROWS
+DETECTOR_PIXEL_SPEC = 0.0198        # cm
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_HEIGHT < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel height ({DETECTOR_PIXEL_HEIGHT:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_WIDTH < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel width ({DETECTOR_PIXEL_WIDTH:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
+APPROX_VOXEL_WIDTH = (
+    DETECTOR_PIXEL_WIDTH / (SOURCE_RADIUS + DETECTOR_RADIUS) * SOURCE_RADIUS)
+APPROX_VOXEL_HEIGHT = (
+    DETECTOR_PIXEL_HEIGHT / (SOURCE_RADIUS + DETECTOR_RADIUS) * SOURCE_RADIUS)
 DETECTOR = {
     "rows": DETECTOR_ROWS,
     "cols": DETECTOR_COLS,
@@ -26,11 +41,11 @@ DETECTOR = {
     "pixel_height": DETECTOR_PIXEL_HEIGHT,
 }
 DATA_DIR = Path(
-    "U:/Xray RPT ChemE/X-ray/Xray_data/2023-02-10 Sophia SBI")
+    "D:/XRay/2023-12-04 Rik")
 CALIBRATION_FILE = str(Path(__file__).parent
                        / "calib"
                        / "resources"
-                       / "geom_pre_proc_VROI500_1000_Cal_20degsec_calibrated_on_06feb2024.npy")
+                       / "geom_preprocessed_Alignment_5 (needles)_calibrated_on_06feb2024.npy")
 
 # / "geom_table474mm_26aug2021_amend_pre_proc_3x10mm_foamballs_vertical_wall_31aug2021.npy")
 
@@ -52,21 +67,22 @@ some starting frames are jittered and must be skipped.
 full = StaticScan(  # example: a full scan that is not rotating
     "full",  # give the scan a name
     DETECTOR,
-    str(DATA_DIR / "pre_proc_5cm_VROI500_1000_Full_01"),
-    proj_start=10,  # TODO
-    proj_end=110,  # TODO: set higher for less noise
+    str(DATA_DIR / "preprocessed_c058_0lmin_22Hz"),    
+    proj_start=30,  # TODO
+    proj_end=210,  # TODO: set higher for less noise
     is_full=True,
     is_rotational=False,  # TODO: check, the column should not rotate!
     geometry=CALIBRATION_FILE,
     geometry_scaling_factor=1.0,
 )
 
+
 empty = StaticScan(
     "empty",
     DETECTOR,
-    str(DATA_DIR / "pre_proc_5cm_VROI500_1000_Empty"),
+    str(DATA_DIR / "preprocessed_Empty_22Hz"),
     proj_start=10,  # TODO
-    proj_end=20,  # TODO: set higher to reduce noise levels
+    proj_end=210,  # TODO: set higher to reduce noise levels
     is_full=False,
     is_rotational=False,  # TODO: check, the column should not rotate!
     geometry=CALIBRATION_FILE,
@@ -79,18 +95,18 @@ empty = StaticScan(
    reconstruction.
 """
 scan = FluidizedBedScan(
-    "MF4",
+    "c058_0lmin",
     DETECTOR,
-    str(DATA_DIR / "pre_proc_5cm_P18_VROI500_1000_MF4_VO50"),
+    str(DATA_DIR / "preprocessed_c058_0lmin_22Hz"),
     liter_per_min=None,  # liter per minute (set None to ignore)
-    projs=range(1000, 2000),  # TODO: set this to a valid range
-    projs_offset={1: 0, 2: 1, 3: 1},
+    projs=range(5, 200),  # TODO: set this to a valid range
+    projs_offset={1: 0, 2: 0, 3: 0},
     geometry=CALIBRATION_FILE,
     cameras=(1, 2, 3),
-    col_inner_diameter=5.0,
+    col_inner_diameter=19.4,
 )
-timeframes = [1630, 1446]  # which images to reconstruct
 # timeframes = [1658, 1650, 1630, 1446]  # which images to reconstruct
+timeframes = [7, 8, 9]
 
 """4. Select a background reference.
 There are basically two options: 
@@ -101,10 +117,10 @@ There are basically two options:
     background density. Computing the mode can also take a long time.
 """
 # option 1:
-# ref = full
-# ref_reduction = 'median'
-ref = copy.deepcopy(scan)
-ref_reduction = 'mode'
+ref = full
+ref_reduction = 'median'
+# ref = copy.deepcopy(scan)
+# ref_reduction = 'mode'
 
 if isinstance(ref, StaticScan):
     ref_path = ref.projs_dir
@@ -155,21 +171,23 @@ sino = recon.load_sinogram(
 
 """6. Perform a SIRT reconstruction (ASTRA Toolbox)"""
 for sino_t in sino:  # go through timeframes one by one
-    sino_t = np.fliplr(np.transpose(sino_t, [0, 2, 1]))
+    # sino_t = np.fliplr(np.transpose(sino_t, [1, 0, 2]))
     plot_projs(sino_t, subplot_row=True)
-    # plt.show()
+    plt.show()
 
     proj_id, proj_geom = recon.sino_gpu_and_proj_geom(sino_t, scan.geometry())
     vol_id, vol_geom = recon.backward(
         proj_id,
         proj_geom,
         algo='sirt',
-        voxels=(200, 200, 800),  # (300, 300, 1500) for better resolution
-        voxel_size=5.5 / 200,  # 5.5 cm / 200 voxels
+        voxels=(750, 750, 750),  # (300, 300, 1500) for better resolution
+        voxel_size=0.04,  # 
         iters=200,
         min_constraint=0.0,
         max_constraint=1.0,
-        col_mask=True)
+        r=int(24/2/0.04),
+        # col_mask=True,
+        )
     x = recon.volume(vol_id)
     recon.clear()
 
