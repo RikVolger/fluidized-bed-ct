@@ -116,7 +116,9 @@ class Reconstruction:
                                 scatter_mean_full,
                                 scatter_mean_empty):
         """This function avoids loading the entire stack of files when
-        the reference is already computed and stored."""
+        the reference is already computed and stored by using the
+        @memory.cache decorator. If you need to recompute, delete files
+        in cache."""
 
         ref = load(ref_path, ref_projs, **load_kwargs)
         if dark is not None:
