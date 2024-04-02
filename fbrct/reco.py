@@ -179,6 +179,7 @@ class Reconstruction:
         col_inner_diameter=None,
         scatter_mean_full: float = 0.0,
         scatter_mean_empty: float = 0.0,
+        averaged: bool = False,
     ):
         """Loads and preprocesses the sinogram."""
 
@@ -190,6 +191,8 @@ class Reconstruction:
             load_kwargs["cameras"] = cameras
         if detector_rows is not None:
             load_kwargs["detector_rows"] = detector_rows
+        if averaged:
+            load_kwargs["average"] = True
 
         dark = None
         if darks_path is not None:

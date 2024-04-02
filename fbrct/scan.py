@@ -268,6 +268,37 @@ class DynamicScan(Scan):
             )
 
 
+class AveragedScan(Scan):
+    """The scanned object changes over time but we're interested in time-averages."""
+
+    def __init__(
+        self,
+        name,
+        detector,
+        projs_dir,
+        proj_start: int,
+        proj_end: int,
+        **kwargs,
+    ):
+        assert proj_end > proj_start > 0
+        self.proj_start = proj_start
+        self.proj_end = proj_end
+        projs = list(range(proj_start, proj_end))
+        super().__init__(name, detector, projs_dir, projs, **kwargs)
+
+    def geometry(self):
+        if self._geometry_manual:
+            geoms = _manual_geometry(self.cameras, nr_projs=1)
+            return [g[0] for g in geoms]  # flattening
+
+        if self._geometry:
+            return cate_to_astra(
+                self._geometry,
+                self.detector,
+                self._geometry_scaling_factor,
+            )
+
+
 class TraverseScan(DynamicScan):
     def __init__(self, *args, timeframes, motor_velocity, **kwargs):
         self.timeframes = timeframes
