@@ -23,6 +23,7 @@ def plot_projs(
         row_end = projs.shape[1]
 
     if subplot_row:
+        # TODO Add some documentation. very hard to figure out what this piece is doing.
         subplt_shape = (
             (1, len(projs),) if projs.shape[1] > projs.shape[2]
             else (len(projs), 1)
