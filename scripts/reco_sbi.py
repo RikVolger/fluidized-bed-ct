@@ -173,19 +173,26 @@ sino = recon.load_sinogram(
 for sino_t in sino:  # go through timeframes one by one
     # sino_t = np.fliplr(np.transpose(sino_t, [1, 0, 2]))
     plot_projs(sino_t, subplot_row=True)
-    plt.show()
-
+    # plt.show()
+    # print(APPROX_VOXEL_HEIGHT)
+    # 1 mm3 pixels is hopefully fine
+    intended_voxel_height = 0.02
+    scaling_factor = intended_voxel_height / APPROX_VOXEL_HEIGHT
+    # 25 cm cube reconstruction box
+    recon_box_side = int(np.ceil(30 / intended_voxel_height))
+    recon_box_height = int(np.ceil(recon_box_side / 2))
+    recon_box = (recon_box_side, recon_box_side, recon_box_height)
     proj_id, proj_geom = recon.sino_gpu_and_proj_geom(sino_t, scan.geometry())
     vol_id, vol_geom = recon.backward(
         proj_id,
         proj_geom,
         algo='sirt',
-        voxels=(750, 750, 750),  # (300, 300, 1500) for better resolution
-        voxel_size=0.04,  # 
+        voxels=recon_box,  # (300, 300, 1500) for better resolution
+        voxel_size=intended_voxel_height,  # 
         iters=200,
         min_constraint=0.0,
         max_constraint=1.0,
-        r=int(24/2/0.04),
+        r=int(20/2/intended_voxel_height),
         # col_mask=True,
         )
     x = recon.volume(vol_id)
@@ -193,7 +200,8 @@ for sino_t in sino:  # go through timeframes one by one
 
     pq.image(x.T)
     plt.figure()
-    plt.imshow(x[:, 100, :])
+    plt.imshow(x[:, :, int(recon_box_height / 2)])
+    plt.colorbar()
     plt.show()
 
     dataset = {
