@@ -271,7 +271,7 @@ class Reconstruction:
 class AstraReconstruction(Reconstruction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+    # TODO explain added value of having empty_volume_gpu. It's a wrapper using default behaviour of volume_gpu. Why not just call that?
     def empty_volume_gpu(self, voxels: tuple, voxel_size):
         return self.volume_gpu(voxels, voxel_size)
 
