@@ -1,11 +1,10 @@
-import copy
 import warnings
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pyqtgraph as pq
 
-from fbrct import loader, reco, Scan, DynamicScan, StaticScan, FluidizedBedScan
+from fbrct import loader, reco, Scan, DynamicScan, StaticScan, FluidizedBedScan, AveragedScan
 from fbrct.reco import AstraReconstruction
 from fbrct.util import plot_projs
 from fbrct import column_mask
@@ -41,7 +40,7 @@ DETECTOR = {
     "pixel_height": DETECTOR_PIXEL_HEIGHT,
 }
 DATA_DIR = Path(
-    "D:/XRay/2023-12-04 Rik")
+    "D:/XRay/2023-11-22 Rik")
 CALIBRATION_FILE = str(Path(__file__).parent
                        / "calib"
                        / "resources"
@@ -64,10 +63,11 @@ some starting frames are jittered and must be skipped.
    been computed.
 """
 
+
 full = StaticScan(  # example: a full scan that is not rotating
     "full",  # give the scan a name
     DETECTOR,
-    str(DATA_DIR / "preprocessed_c058_0lmin_22Hz"),    
+    str(DATA_DIR / "preprocessed_c001_0lmin_22Hz"),    
     proj_start=30,  # TODO
     proj_end=210,  # TODO: set higher for less noise
     is_full=True,
@@ -94,19 +94,34 @@ empty = StaticScan(
    of the bed material. This is required to compute gas fractions in the
    reconstruction.
 """
-scan = FluidizedBedScan(
-    "c058_0lmin",
+# scan = FluidizedBedScan(
+#     "c058_0lmin",
+#     DETECTOR,
+#     str(DATA_DIR / "preprocessed_c058_0lmin_22Hz"),
+#     liter_per_min=None,  # liter per minute (set None to ignore)
+#     projs=range(5, 200),  # TODO: set this to a valid range
+#     projs_offset={1: 0, 2: 0, 3: 0},
+#     geometry=CALIBRATION_FILE,
+#     cameras=(1, 2, 3),
+#     col_inner_diameter=19.4,
+# )
+scan = AveragedScan(
+    "empty_recon",
     DETECTOR,
-    str(DATA_DIR / "preprocessed_c058_0lmin_22Hz"),
-    liter_per_min=None,  # liter per minute (set None to ignore)
-    projs=range(5, 200),  # TODO: set this to a valid range
+    str(DATA_DIR / "preprocessed_c001_150lmin_22Hz"),
+    proj_start=10,
+    proj_end=1210,
+    # liter_per_min=None,  # liter per minute (set None to ignore)
+    # projs=range(5, 2640),  # TODO: set this to a valid range
     projs_offset={1: 0, 2: 0, 3: 0},
     geometry=CALIBRATION_FILE,
     cameras=(1, 2, 3),
     col_inner_diameter=19.4,
 )
+# timeframes = [1630, 1446]  # which images to reconstruct
 # timeframes = [1658, 1650, 1630, 1446]  # which images to reconstruct
-timeframes = [7, 8, 9]
+# timeframes = [7, 8, 9]
+timeframes = range(scan.proj_start, scan.proj_end)
 
 """4. Select a background reference.
 There are basically two options: 
@@ -165,8 +180,9 @@ sino = recon.load_sinogram(
     ref_full=ref.is_full,
     density_factor=scan.density_factor,
     col_inner_diameter=scan.col_inner_diameter,
-    scatter_mean_full=600,
-    scatter_mean_empty=500,
+    # scatter_mean_full=600,
+    # scatter_mean_empty=500,
+    averaged=True
 )
 
 """6. Perform a SIRT reconstruction (ASTRA Toolbox)"""
