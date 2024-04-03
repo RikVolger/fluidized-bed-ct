@@ -196,6 +196,18 @@ for sino_t in sino:  # go through timeframes one by one
     plt.imshow(x[:, 100, :])
     plt.show()
 
+    dataset = {
+        'reconstruction': x,
+        'frames': timeframes,
+        'scan_folder': scan.projs_dir,
+        'empty_folder': empty.projs_dir,
+        'full_folder': full.projs_dir,
+        'iterations': 200,
+        'algorithm': 'sirt',
+    }
+
+    # scio.savemat(emptypathbuilder(DATA_DIR, "22Hz") / "recon.mat", dataset, do_compression=True)
+
 # """6. Perform a SIRT reconstruction (experimental - ASTRA KernelKit)"""
 # import cupy as cp
 # import kernelkit as kk
