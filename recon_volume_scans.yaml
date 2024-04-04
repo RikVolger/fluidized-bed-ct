@@ -8,6 +8,27 @@ detector_width_spec: 30.7     # cm, also outside ROI
 detector_height_spec: 30.2    # cm, also outside ROI
 detector_pixel_spec: 0.0198   # cm
 calibration_file: C:\Users\rikvolger\Codebase\fluidized-bed-ct-rik\scripts\calib\resources\geom_preprocessed_Alignment_5 (needles)_calibrated_on_06feb2024.npy
+column_inner_diameter: 19.2   # cm
+column_outer_diameter: 20.0   # cm
+number_of_iterations: 200
+investigate_loss: True
+recon_volumes:    # in cm
+- side: 30
+  height: 15
+- side: 27.5
+  height: 15
+- side: 25
+  height: 15
+- side: 22.5
+  height: 15
+- side: 20
+  height: 15
+- side: 19.2
+  height: 15
+voxel_sizes:    # in cm
+- 0.03
+mask_sizes:     # mask diameter in cm
+- 20
 framerates:
 - 22Hz
 # - 120Hz
@@ -21,104 +42,23 @@ measurements:
   root: D:/XRay/2023-11-22 Rik
   concentrations: 
   - c001
-  - c002
-  - c003
-  - c011
 - day: 23-11-2023
   root: D:/XRay/2023-11-23 Rik
   concentrations:
-  - c004
   - c005
-  - c006
-  - c007
-  - c008
-  - c009
-  - c010
 - day: 24-11-2023
   root: D:/XRay/2023-11-24 Rik
   concentrations:
-  - c012
   - c013
-  - c014
-  - c015
-  - c026
 - day: 27-11-2023
   root: D:/XRay/2023-11-27 Rik
   concentrations:
   - c016
-  - c021
-  - c022
-  - c023
-  - c024
-  - c025
-- day: 28-11-2023
-  root: D:/XRay/2023-11-28 Rik
-  concentrations:
-  - c017
-  - c018
-  - c019
-  - c020
-- day: 30-11-2023
-  root: D:/XRay/2023-11-30 Rik
-  concentrations:
-  - c027
-  - c028
-  - c029
-  - c030
-  - c031
-  - c032
-  - c033
-  - c034
-  - c035
-- day: 01-12-2023
-  root: D:/XRay/2023-12-01 Rik
-  concentrations:
-  - c036
-  - c037
-  - c038
-  - c039
-  - c040
-  - c041
-  - c042
-  - c043
-- day: 04-12-2023
-  root: D:/XRay/2023-12-04 Rik
-  concentrations:
-  - c044
-  - c045
-  - c046
-  - c047
-  - c048
-  - c049
-  - c050
-  - c057
-  - c058
 - day: 05-12-2023
   root: D:/XRay/2023-12-05 Rik
   concentrations:
-  - c051
   - c052
-  - c053
-  - c054
-  - c055
-  - c059
-  - c060
-  - c061
 - day: 06-12-2023
   root: D:/XRay/2023-12-06 Rik
   concentrations:
-  - c066
-  - c067
-  - c068
-  - c069
-  - c070
   - c071
-- day: 07-12-2023
-  root: D:/XRay/2023-12-07 Rik
-  concentrations:
-  - c001
-  - c056
-  - c062
-  - c063
-  - c064
-  - c065
