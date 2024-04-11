@@ -34,19 +34,21 @@ def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
 def _astra_sirt_algo(
     volume_id, sinogram_id, iters, mask_id,
     min_constraint=0.0, max_constraint=None,
+    algo_id=None
 ):
     import astra
+    if algo_id is None:
+        cfg = astra.astra_dict(
+            "SIRT3D_CUDA")  # 'FDK_CUDA', 'SIRT3D_CUDA', 'CGLS3D_CUDA',
+        cfg["ReconstructionDataId"] = volume_id
+        cfg["ProjectionDataId"] = sinogram_id
+        cfg["option"] = {"MinConstraint": min_constraint,
+                        "MaxConstraint": max_constraint,
+                        "ReconstructionMaskId": mask_id}
 
-    cfg = astra.astra_dict(
-        "SIRT3D_CUDA")  # 'FDK_CUDA', 'SIRT3D_CUDA', 'CGLS3D_CUDA',
-    cfg["ReconstructionDataId"] = volume_id
-    cfg["ProjectionDataId"] = sinogram_id
-    cfg["option"] = {"MinConstraint": min_constraint,
-                     "MaxConstraint": max_constraint,
-                     "ReconstructionMaskId": mask_id}
-
-    algo_id = astra.algorithm.create(cfg)
+        algo_id = astra.algorithm.create(cfg)
     astra.algorithm.run(algo_id, iters)  # nr iters
+    return astra.algorithm.get_res_norm(algo_id), algo_id
 
 
 class Reconstruction:
@@ -321,6 +323,7 @@ class AstraReconstruction(Reconstruction):
         iters=200,
         min_constraint=0.0,
         max_constraint=None,
+        investigating_loss: bool = False,   # flag to log loss progression during iterations
         **kwargs,
     ):
         vol_id, vol_geom = self.empty_volume_gpu(voxels, voxel_size)
@@ -332,20 +335,35 @@ class AstraReconstruction(Reconstruction):
             col_mask = column_mask(voxels, **kwargs)
             col_mask = np.transpose(col_mask, [2, 1, 0])
             mask_id, _ = self.volume_gpu(voxels, voxel_size, col_mask)
-            _astra_sirt_algo(
-                vol_id,
-                proj_id,
-                iters,
-                mask_id,
-                min_constraint=min_constraint,
-                max_constraint=max_constraint,
-            )
+            if investigating_loss:
+                # run _astra_sirt_algo for one iter at a time, recording loss
+                loss = np.zeros(iters)
+                algo_id = None
+                for i in range(iters):
+                    loss[i], algo_id = _astra_sirt_algo(
+                        vol_id,
+                        proj_id,
+                        1,
+                        mask_id,
+                        min_constraint=min_constraint,
+                        max_constraint=max_constraint,
+                        algo_id=algo_id
+                    )
+            else:
+                loss, _ = _astra_sirt_algo(
+                    vol_id,
+                    proj_id,
+                    iters,
+                    mask_id,
+                    min_constraint=min_constraint,
+                    max_constraint=max_constraint,
+                )
         elif algo == "fdk":
             _astra_fdk_algo(vol_geom, proj_geom, vol_id, proj_id)
         else:
             raise ValueError("Algorithm value incorrect.")
 
-        return vol_id, vol_geom
+        return vol_id, vol_geom, loss
 
     @staticmethod
     def forward(volume_id, volume_geom, projection_geom, returnData=False):
