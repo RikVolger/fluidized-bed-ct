@@ -7,24 +7,9 @@ import scipy.io as scio
 from matplotlib import pyplot as plt
 
 from fbrct import loader, reco, StaticScan, AveragedScan
+from scripts.pathbuilders import concpathbuilder, emptypathbuilder, fullpathbuilder, mat_filename
 
 """0. Helper functions"""
-def pathbuilder(root, parts):
-    # return root and then the parts joined by underscores.
-    # Ignores None or empty (falsey) entries.
-    return Path(root, "_".join([part for part in parts if part]))
-
-
-def concpathbuilder(root, concentration, flowrate, framerate):
-    return pathbuilder(root, ["preprocessed", concentration, flowrate, framerate])
-
-
-def fullpathbuilder(root, concentration, framerate):
-    return pathbuilder(root, ["preprocessed", concentration, "0lmin", framerate])
-
-
-def emptypathbuilder(root, framerate):
-    return pathbuilder(root, ["preprocessed", "Empty", framerate])
 
 
 def create_empty_scan(root, framerate):
@@ -213,6 +198,10 @@ for series in scans['measurements']:
         niters = 200
         for sino_t in sino:
             for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
+                # Investigating change in recon volume doesn't add much if the mask is kept the same.
+                # Mask size is overridden in these cases.
+                if len(RECON_VOLUMES) > 1 and len(MASK_SIZES) == 1:
+                    mask_size = recon_size['side']
                 loss, x = reconstruct(t_avg, recon, algo, sino_t, niters, voxel_size, recon_size, mask_size)
                 # save results in cXXX folder
                 dataset = {
@@ -228,18 +217,18 @@ for series in scans['measurements']:
                     'algorithm': algo,
                     'loss': loss,
                 }
-                filenameparts = ["recon"]
-                if INVESTIGATING_LOSS:
-                    filenameparts += ["loss"]
-                if len(RECON_VOLUMES) > 1:
-                    filenameparts += [f"volume-{recon_size['side']}x{recon_size['height']}"]
-                if len(VOXEL_SIZES) > 1:
-                    filenameparts += [f"resolution-{voxel_size}cm"]
-                if len(MASK_SIZES) > 1:
-                    filenameparts += [f"mask-{mask_size}cm"]
+                filename = mat_filename(
+                    INVESTIGATING_LOSS,
+                    len(RECON_VOLUMES) > 1,
+                    len(VOXEL_SIZES) > 1,
+                    len(MASK_SIZES) > 1,
+                    recon_size,
+                    voxel_size,
+                    mask_size)
 
-                full_path = concpathbuilder(root, c, gasflow, framerate) / "_".join(filenameparts) + ".mat"
-                scio.savemat(full_path, dataset, appendmat=True, do_compression=True)
+                full_path = concpathbuilder(root, c, gasflow, framerate) / filename
+
+                scio.savemat(full_path, dataset, do_compression=True)
 
                 if INVESTIGATING_LOSS and PLOTTING:
                     plt.plot(loss)
