@@ -1,4 +1,5 @@
 output_folder: D:\XRay\output\parameter_investigation
+iterations: 200
 loss:
   concentrations:
   - c001
@@ -37,7 +38,7 @@ loss:
     root: D:/XRay/2023-12-06 Rik
     concentrations:
     - c071
-volume:
+volume_side:
   concentrations:
   - c001
   - c005
@@ -88,7 +89,54 @@ volume:
     root: D:/XRay/2023-12-06 Rik
     concentrations:
     - c071
-mask  :
+volume_height:
+  concentrations:
+  - c001
+  - c005
+  - c013
+  - c016
+  - c052
+  - c071
+  recon_volumes:
+  - side: 25
+    height: 15
+  - side: 25
+    height: 20
+  - side: 25
+    height: 25
+  - side: 25
+    height: 30
+  framerate: 22Hz
+  flowrates:
+  - 30lmin
+  - 150lmin
+  iterations: 200
+  measurements:
+  - day: 22-11-2023
+    root: D:/XRay/2023-11-22 Rik
+    concentrations:
+    - c001
+  - day: 23-11-2023
+    root: D:/XRay/2023-11-23 Rik
+    concentrations:
+    - c005
+  - day: 24-11-2023
+    root: D:/XRay/2023-11-24 Rik
+    concentrations:
+    - c013
+  - day: 27-11-2023
+    root: D:/XRay/2023-11-27 Rik
+    concentrations:
+    - c016
+  - day: 05-12-2023
+    root: D:/XRay/2023-12-05 Rik
+    concentrations:
+    - c052
+  - day: 06-12-2023
+    root: D:/XRay/2023-12-06 Rik
+    concentrations:
+    - c071
+mask:
   concentrations:
   - c001
   - c005
@@ -97,14 +145,62 @@ mask  :
   - c052
   - c071
   mask_sizes:
+  - 19
   - 20
   - 21
   - 22
   - 23
-  - 24
   recon_volume:
   - side: 25
     height: 15
+  framerate: 22Hz
+  flowrates:
+  - 30lmin
+  - 150lmin
+  iterations: 200
+  measurements:
+  - day: 22-11-2023
+    root: D:/XRay/2023-11-22 Rik
+    concentrations:
+    - c001
+  - day: 23-11-2023
+    root: D:/XRay/2023-11-23 Rik
+    concentrations:
+    - c005
+  - day: 24-11-2023
+    root: D:/XRay/2023-11-24 Rik
+    concentrations:
+    - c013
+  - day: 27-11-2023
+    root: D:/XRay/2023-11-27 Rik
+    concentrations:
+    - c016
+  - day: 05-12-2023
+    root: D:/XRay/2023-12-05 Rik
+    concentrations:
+    - c052
+  - day: 06-12-2023
+    root: D:/XRay/2023-12-06 Rik
+    concentrations:
+    - c071
+voxel_size:
+  concentrations:
+  - c001
+  - c005
+  - c013
+  - c016
+  - c052
+  - c071
+  recon_volume:    # in cm
+  - side: 22.5
+    height: 30
+  voxel_sizes:    # in cm
+  - 0.025
+  - 0.03
+  - 0.04
+  - 0.05
+  - 0.10
+  - 0.2
   framerate: 22Hz
   flowrates:
   - 30lmin
