@@ -233,9 +233,10 @@ def compute_bed_density(empty, ref, L: float, nr_bins=1000,
     # This is an annoying value that I need to have in here, because sometimes
     # pieces of metal appear in the bed and they have huge attenuation. In such
     # case the modal value of the bed gets disturbed.
-    np.clip(bed, 0., max_bed_val, out=bed)
-    _isfinite(bed)
+    # np.clip(bed, 0., max_bed_val, out=bed)
+    # _isfinite(bed)
 
+    # TODO Why is this here? Should already be covered by previous lines, right?
     np.clip(bed, 0.0, None, out=bed)
 
     sum = 0.0
