@@ -1,3 +1,5 @@
+import pickle
+import h5py
 import yaml
 import itertools
 import numpy as np
@@ -7,9 +9,10 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 
-from scripts.pathbuilders import concpathbuilder, mat_filename
+from scripts.pathbuilders import concpathbuilder, emptypathbuilder, fullpathbuilder, hdf5_filename, mat_filename, pkl_filename
 
 blues9 = [
+    '#ef3b2c',
     '#f7fbff',
     '#deebf7',
     '#c6dbef',
@@ -18,10 +21,10 @@ blues9 = [
     '#4292c6',
     '#2171b5',
     '#08519c',
-    '#08306b'
+    '#08306b',
 ]
 
-blues9_map = ListedColormap(blues9, name='blues9')
+blues9_map = ListedColormap(blues9[::-1], name='blues9')
 
 
 def load_mat(framerate, root, conc, mat_kwargs, f):
@@ -35,6 +38,36 @@ def load_mat(framerate, root, conc, mat_kwargs, f):
     return recon_mat
 
 
+def load_pkl(framerate, root, conc, mat_kwargs, f):
+    """Load reconstruction file from drive."""
+    conc_path = concpathbuilder(root, conc, f, framerate)
+    filename = pkl_filename(**mat_kwargs)
+
+    full_path = conc_path / filename
+    print(f"Loading from {full_path}")
+    with open(full_path, 'rb') as pkl_file:
+        recon_pkl = pickle.load(pkl_file)
+
+    return recon_pkl
+
+
+def load_hdf5(framerate, root, conc, mat_kwargs, f):
+    """Load reconstruction file from drive."""
+    if f == "Empty":
+        conc_path = emptypathbuilder(root, framerate)
+    elif f == "Full":
+        conc_path = fullpathbuilder(root, conc, framerate)
+    else:
+        conc_path = concpathbuilder(root, conc, f, framerate)
+    filename = hdf5_filename(**mat_kwargs)
+
+    full_path = conc_path / filename
+    print(f"Loading from {full_path}")
+    recon_hdf5 = h5py.File(full_path, 'r')
+
+    return recon_hdf5['reconstruction']
+
+
 def extract_mat_kwargs(setting, mat_kwargs):
     """Extent mat_kwargs with appropriate setting."""
     if 'volume' in mat_kwargs.keys() and mat_kwargs['volume']:
@@ -45,6 +78,8 @@ def extract_mat_kwargs(setting, mat_kwargs):
         return mat_kwargs
     if 'mask' in mat_kwargs.keys() and mat_kwargs['mask']:
         mat_kwargs['mask_size'] = setting
+        return mat_kwargs
+    if 'bhc' in mat_kwargs.keys() and mat_kwargs['bhc']:
         return mat_kwargs
     return mat_kwargs
 
@@ -60,6 +95,10 @@ def setting_text(mat_kwargs, setting):
         return f"{setting} cm"
     if 'mask' in mat_kwargs.keys() and mat_kwargs['mask']:
         return f"{setting} cm"
+    if 'bhc' in mat_kwargs.keys() and mat_kwargs['bhc']:
+        if setting:
+            return "BHC"
+        return "No BHC"
     return f"{setting}"
 
 
@@ -72,14 +111,17 @@ def create_setting_figure(
         mat_kwargs: dict,
         setting_title: str,
         out_subfolder: str,
-        volume: dict = {'side': 20, 'height': 15}
+        volume: dict = {'side': 20, 'height': 15},
+        width_ratios: list = [1, 3, 3, 1],
+        figsize: tuple = (8, 10)
         ):
     """Create a figure for the current investigated setting and return figure handle
     
     TODO: More detailed description.
     """
-    fig = plt.figure(layout='constrained', figsize=(8, 10))
-    subfigs = fig.subfigures(6, 4, wspace=0.07, width_ratios=[1, 3, 3, 1])
+    fig = plt.figure(layout='constrained', figsize=figsize)
+    n_rows = max(len(settings), 6)
+    subfigs = fig.subfigures(n_rows, len(width_ratios), wspace=0.07, width_ratios=width_ratios)
     # figure counters
     row = 0
     # for volume in volumes
@@ -99,16 +141,18 @@ def create_setting_figure(
         col += 1
         for i, f in enumerate(flowrates):
             # load .mat file - recon
-            recon_mat = load_mat(framerate, day['root'], conc, mat_kwargs, f)
-            reconstruction = recon_mat['reconstruction']
-            horizontal_plane = reconstruction[:, :, int(volume['height'] / recon_mat['voxel_size'] / 2)]
-            vertical_plane = np.rot90(reconstruction[:, int(volume['side'] / recon_mat['voxel_size'] / 2), :])
+            # recon_mat = load_mat(framerate, day['root'], conc, mat_kwargs, f)
+            # print(volume)
+            reconstruction = load_hdf5(framerate, day['root'], conc, mat_kwargs, f)
+            voxel_size = reconstruction.attrs.get('voxel_size')
+            horizontal_plane = reconstruction[:, :, int(volume['height'] / voxel_size / 2)]
+            vertical_plane = np.rot90(reconstruction[:, int(volume['side'] / voxel_size / 2), :])
             # Subplots for the plane images.
             axs = subfigs[row, col].subplots(1, 2)
-            axs[0].imshow(horizontal_plane, cmap=blues9_map, vmax=0.45)
+            axs[0].imshow(horizontal_plane, cmap=blues9_map, vmax=0.9)
             axs[0].axis('off')
             # Store axes handle for colorbar.
-            im = axs[1].imshow(vertical_plane, cmap=blues9_map, vmax=0.45)
+            im = axs[1].imshow(vertical_plane, cmap=blues9_map, vmax=0.9)
             axs[1].axis('off')
             # Create a colorbar to the right of subplots.
             cb = subfigs[row, col].colorbar(im, ax=axs, location="right", aspect=10)
@@ -120,17 +164,24 @@ def create_setting_figure(
                 axs[0].set_title("Horizontal", fontsize='medium')
                 axs[1].set_title("Vertical", fontsize='medium')
             # Store loss progression.
-            volume_losses[i, :] = recon_mat['loss']
+            volume_losses[i, :] = reconstruction.attrs.get('loss')
             col += 1
+            del reconstruction
 
         # Losses subplots.
-        axs = subfigs[row, col].subplots(2, 1, sharex=True)
-        axs[0].plot(volume_losses[0, :])
-        axs[0].set_title(f"{flowrates[0]}", fontsize='small')
-        axs[0].tick_params(axis='y', labelsize='x-small')
-        axs[1].plot(volume_losses[1, :])
-        axs[1].set_title(f"{flowrates[1]}", fontsize='small')
-        axs[1].tick_params(axis='both', labelsize='x-small')
+        axs = subfigs[row, col].subplots(min(2, len(flowrates)), 1, sharex=True)
+        if len(flowrates) > 1:
+            axs[0].plot(volume_losses[0, :])
+            axs[0].set_title(f"{flowrates[0]}", fontsize='small')
+            axs[0].tick_params(axis='y', labelsize='x-small')
+
+            axs[1].plot(volume_losses[1, :])
+            axs[1].set_title(f"{flowrates[1]}", fontsize='small')
+            axs[1].tick_params(axis='both', labelsize='x-small')
+        else:
+            axs.plot(volume_losses[0, :])
+            axs.set_title(f"{flowrates[0]}", fontsize='small')
+            axs.tick_params(axis='both', labelsize='x-small')
         # Add title on first row.
         if row == 0:
             subfigs[row, col].suptitle("Losses", fontsize='medium')
@@ -203,10 +254,12 @@ if "volume_side" in scans.keys() and False:
             mat_kwargs = {
                 'loss': True,
                 'volume': True,
+                'init': 'ones',
             }
             fig = create_setting_figure(
                 day, conc, volumes, iterations, flowrates, mat_kwargs,
-                'Volume', 'volume_side')
+                'Volume', 'volume_side', width_ratios=[1, 3, 3, 3, 3, 1],
+                figsize=(12, 10))
 
 
 if "volume_height" in scans.keys() and False:
@@ -227,7 +280,7 @@ if "volume_height" in scans.keys() and False:
                 'Volume', 'volume_height')
 
 
-if "mask" in scans.keys() and True:
+if "mask" in scans.keys() and False:
     mask_scans = scans['mask']
     concentrations = mask_scans['concentrations']
     masks = mask_scans['mask_sizes']
@@ -240,29 +293,226 @@ if "mask" in scans.keys() and True:
             mat_kwargs = {
                 'loss': True,
                 'mask': True,
+                'init': 'ones',
             }
             fig = create_setting_figure(
-                day, conc, masks, iterations, flowrates, mat_kwargs, 'Mask', 'mask', volume=volume
+                day, conc, masks, iterations, flowrates, mat_kwargs,
+                'Mask', 'mask', volume=volume,
+                width_ratios=[1, 3, 3, 3, 3, 3, 3, 1],
+                figsize=(14, 10)
             )
 
-if "voxel_size" in scans.keys() and False:
+if "voxel_size" in scans.keys() and True:
     voxel_scans = scans['voxel_size']
     concentrations = voxel_scans['concentrations']
     volume = voxel_scans['recon_volume'][0]
     flowrates = voxel_scans['flowrates']
     framerate = voxel_scans['framerate']
-    iterations = scans['iterations']
+    iterations = voxel_scans['iterations']
     voxel_sizes = voxel_scans['voxel_sizes']
     for day in voxel_scans['measurements']:
         for conc in day['concentrations']:
             mat_kwargs = {
                 'loss': True,
                 'resolution': True,
+                'init': 'ones',
             }
             fig = create_setting_figure(
                 day, conc, voxel_sizes, iterations, flowrates, mat_kwargs,
                 'Voxel\nsize', 'voxel_size', volume=volume)
 
+if "BHC" in scans.keys() and False:
+    bhc_scans = scans['BHC']
+    concentrations = bhc_scans['concentrations']
+    volume = bhc_scans['recon_volume'][0]
+    flowrates = bhc_scans['flowrates']
+    framerate = bhc_scans['framerate']
+    iterations = bhc_scans['iterations']
+    bhc = [True, False]
+    # bhc = [True]
+    out_subfolder = 'beam_hardening_correction'
+    for day in bhc_scans['measurements']:
+        for conc in day['concentrations']:
+            mat_kwargs = {
+                'loss': True,
+                'bhc': True,
+            }
+            fig = plt.figure(layout='constrained', figsize=(10, 5))
+            subfigs = fig.subfigures(2, 5, wspace=0.07, width_ratios=[1, 3, 3, 3, 3])
+            # figure counters
+            row = 0
+            # for volume in volumes
+            for setting in bhc:
+                mat_kwargs['bhc'] = setting
+                # data placeholder for losses
+                volume_losses = np.zeros((len(flowrates), iterations))
+                col = 0
+                axs = subfigs[row, col].subplots(1, 1)
+                axs.text(.5, .5, mat_kwargs['bhc'], ha="center", va="center")
+                axs.axis('off')
+                if row == 0:
+                    axs.set_title("BHC", fontsize="medium")
+                col += 1
+                for i, f in enumerate(flowrates):
+                    # load .mat file - recon
+                    # recon_mat = load_mat(framerate, day['root'], conc, mat_kwargs, f)
+                    reconstruction = load_hdf5(framerate, day['root'], conc, mat_kwargs, f)
+                    voxel_size = reconstruction.attrs.get('voxel_size')
+                    horizontal_plane = reconstruction[:, :, int(volume['height'] / voxel_size / 2)]
+                    vertical_plane = np.rot90(reconstruction[:, int(volume['side'] / voxel_size / 2), :])
+                    # Subplots for the plane images.
+                    axs = subfigs[row, col].subplots(1, 2)
+                    axs[0].imshow(
+                        horizontal_plane,
+                        cmap=blues9_map,
+                        vmax=0.5
+                    )
+                    axs[0].axis('off')
+                    # Store axes handle for colorbar.
+                    im = axs[1].imshow(
+                        vertical_plane,
+                        cmap=blues9_map,
+                        vmax=0.5
+                    )
+                    axs[1].axis('off')
+                    # Create a colorbar to the right of subplots.
+                    cb = subfigs[row, col].colorbar(im, ax=axs, location="right", aspect=10)
+                    cb.ax.tick_params(labelsize='x-small')
+
+                    # Add titles to first row.
+                    if row == 0:
+                        subfigs[row, col].suptitle(f)
+                        axs[0].set_title("Horizontal", fontsize='medium')
+                        axs[1].set_title("Vertical", fontsize='medium')
+                    # Store loss progression.
+                    volume_losses[i, :] = reconstruction.attrs.get('loss')
+                    col += 1
+                    # As h5py is keeping the file open, delete variable to close it.
+                    del reconstruction
+
+                # Losses subplots.
+                # axs = subfigs[row, col].subplots(2, 1, sharex=True)
+                # axs[0].plot(volume_losses[0, :])
+                # axs[0].set_title(f"{flowrates[0]}", fontsize='small')
+                # axs[0].tick_params(axis='y', labelsize='x-small')
+                # axs[1].plot(volume_losses[1, :])
+                # axs[1].set_title(f"{flowrates[1]}", fontsize='small')
+                # axs[1].tick_params(axis='both', labelsize='x-small')
+                # # Add title on first row.
+                # if row == 0:
+                #     subfigs[row, col].suptitle("Losses", fontsize='medium')
+                row += 1
+            fig.suptitle(conc, fontsize="xx-large")
+            print(f"Saving image {out_folder / out_subfolder / conc}")
+            fig.savefig(out_folder / out_subfolder / f"{conc}.png", dpi=300)
+            fig.savefig(out_folder / out_subfolder / f"{conc}.pdf", dpi=900)
+
+if "init" in scans.keys() and False:
+    init_scans = scans['init']
+    concentrations = init_scans['concentrations']
+    volume = init_scans['recon_volume'][0]
+    flowrates = init_scans['flowrates']
+    framerate = init_scans['framerate']
+    iterations = init_scans['iterations']
+    init = ["flat", "parabolic"]
+    # bhc = [True]
+    out_subfolder = 'initialization'
+    for day in init_scans['measurements']:
+        for conc in day['concentrations']:
+            mat_kwargs = {
+                'loss': True,
+                'init': "flat",
+            }
+            fig = plt.figure(layout='constrained', figsize=(10, 5))
+            subfigs = fig.subfigures(2, 5, wspace=0.07, width_ratios=[1, 3, 3, 3, 3])
+            # figure counters
+            row = 0
+            # for volume in volumes
+            for setting in init:
+                mat_kwargs['init'] = setting
+                # data placeholder for losses
+                volume_losses = np.zeros((len(flowrates), iterations))
+                col = 0
+                axs = subfigs[row, col].subplots(1, 1)
+                axs.text(.5, .5, mat_kwargs['init'], ha="center", va="center")
+                axs.axis('off')
+                if row == 0:
+                    axs.set_title("Initialization", fontsize="medium")
+                col += 1
+                for i, f in enumerate(flowrates):
+                    # load .mat file - recon
+                    # recon_mat = load_mat(framerate, day['root'], conc, mat_kwargs, f)
+                    reconstruction = load_hdf5(framerate, day['root'], conc, mat_kwargs, f)
+                    voxel_size = reconstruction.attrs.get('voxel_size')
+                    horizontal_plane = reconstruction[:, :, int(volume['height'] / voxel_size / 2)]
+                    vertical_plane = np.rot90(reconstruction[:, int(volume['side'] / voxel_size / 2), :])
+                    # Subplots for the plane images.
+                    axs = subfigs[row, col].subplots(1, 2)
+                    axs[0].imshow(
+                        horizontal_plane,
+                        cmap=blues9_map,
+                        vmax=0.5
+                    )
+                    axs[0].axis('off')
+                    # Store axes handle for colorbar.
+                    im = axs[1].imshow(
+                        vertical_plane,
+                        cmap=blues9_map,
+                        vmax=0.5
+                    )
+                    axs[1].axis('off')
+                    # Create a colorbar to the right of subplots.
+                    cb = subfigs[row, col].colorbar(im, ax=axs, location="right", aspect=10)
+                    cb.ax.tick_params(labelsize='x-small')
+
+                    # Add titles to first row.
+                    if row == 0:
+                        subfigs[row, col].suptitle(f)
+                        axs[0].set_title("Horizontal", fontsize='medium')
+                        axs[1].set_title("Vertical", fontsize='medium')
+                    # Store loss progression.
+                    volume_losses[i, :] = reconstruction.attrs.get('loss')
+                    col += 1
+                    # As h5py is keeping the file open, delete variable to close it.
+                    del reconstruction
+
+                # Losses subplots.
+                loss_fig, axs = plt.subplots(1, 2, layout="constrained", figsize=(7, 3))
+                axs[0].plot(volume_losses[0, :])
+                axs[0].set_title(f"{flowrates[0]}", fontsize='small')
+                axs[0].tick_params(axis='y', labelsize='x-small')
+                axs[0].set_ylim([0, 1000])
+                axs[1].plot(volume_losses[1, :])
+                axs[1].set_title(f"{flowrates[1]}", fontsize='small')
+                axs[1].tick_params(axis='both', labelsize='x-small')
+                axs[1].set_ylim([0, 1000])
+                # Add title on first row.
+                loss_fig.suptitle("Losses", fontsize='medium')
+                loss_fig.savefig(out_folder / out_subfolder / f"Loss_{setting}_{conc}.png", dpi=300)
+                row += 1
+            fig.suptitle(conc, fontsize="xx-large")
+            print(f"Saving image {out_folder / out_subfolder / conc}")
+            fig.savefig(out_folder / out_subfolder / f"{conc}.png", dpi=300)
+            fig.savefig(out_folder / out_subfolder / f"{conc}.pdf", dpi=900)
+
+if "scatter" in scans.keys() and False:
+    scatter_scans = scans['scatter']
+    out_folder = Path(scatter_scans['out_folder'])
+    concentrations = scatter_scans['concentrations']
+    volume = scatter_scans['recon_volume'][0]
+    flowrates = scatter_scans['flowrates']
+    framerate = scatter_scans['framerate']
+    iterations = scatter_scans['iterations']
+    scatter_cor = scatter_scans['scatter']
+    for day in scatter_scans['measurements']:
+        for conc in day['concentrations']:
+            mat_kwargs = {
+                'loss': True,
+            }
+            fig = create_setting_figure(
+                day, conc, scatter_cor, iterations, flowrates, mat_kwargs,
+                'Scatter\ncorrection', '', volume=volume,
+                width_ratios=[1, 3, 3, 3, 3, 1], figsize=(16, 10))
 # framerate = "22Hz"
 # # Build array of paths for detailed scans
 # paths_detailed = []
