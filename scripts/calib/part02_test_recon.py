@@ -16,12 +16,12 @@ detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
 CALIB_FOLDER = Path(__file__).parent
 
 # directory of the calibration scan
-DATA_DIR_CALIB = R"D:\XRay\2023-11-21 Rik"
-MAIN_DIR_CALIB = "preprocessed_Alignment_5 (needles)"
+DATA_DIR_CALIB = R"D:\XRay\2024-06-13 Rik"
+MAIN_DIR_CALIB = "preprocessed_Needles_Rotation_5degps"
 
 # directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = R"D:\XRay\2023-12-04 Rik"
-MAIN_DIR = "preprocessed_c058_0lmin_22Hz"
+DATA_DIR = R"D:\XRay\2024-06-13 Rik"
+MAIN_DIR = "preprocessed_Needles_Rotation_5degps"
 PROJS_PATH = f'{DATA_DIR}\{MAIN_DIR}'
 
 # configure which projection range to take
@@ -59,11 +59,19 @@ elif MAIN_DIR == "preprocessed_c058_0lmin_22Hz":
     t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
     t_range = [8]
     # t_range = np.linspace(proj_start, proj_end, 1, dtype=int)
+elif MAIN_DIR == "preprocessed_Needles_Rotation_5degps":
+    proj_start = 20
+    proj_end = 1604
+    nr_projs = proj_end - proj_start
+    x = 50  # safety margin for start
+    n_annotated = 6
+    t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
+    t_range = range(proj_start, proj_end, 12)
 else:
     raise Exception()
 
 # postfix of stored claibration
-POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_06feb2024'
+POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_04jul2024'
 
 t = t_annotated
 # t = [497, 958, 1223]
@@ -119,7 +127,7 @@ vol_id, vol_geom = astra_reco_rotation_singlecamera(
     reco,
     all_projs,
     all_geoms,
-    'sirt',
+    'fdk',
     [int(1500/scaling), int(1500/scaling), int(1500/scaling)],
     0.016 * scaling,
     max_constraint=1.0,

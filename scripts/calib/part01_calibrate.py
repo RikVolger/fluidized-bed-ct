@@ -12,10 +12,10 @@ detector = cate_astra.Detector(
 
 
 """ 1. Choose a directory, and find the range of motion in the projections."""
-DATA_DIR = R"D:\XRay\2023-11-21 Rik"
-MAIN_DIR = "preprocessed_Alignment_5 (needles)"
+DATA_DIR = R"D:\XRay\2024-06-13 Rik"
+MAIN_DIR = "preprocessed_Needles_Rotation_5degps"
 PROJS_PATH = f"{DATA_DIR}/{MAIN_DIR}"
-POSTFIX = f"{MAIN_DIR}_calibrated_on_06feb2024"  # set this value
+POSTFIX = f"{MAIN_DIR}_calibrated_on_04jul2024"  # set this value
 
 t_annotated = None
 if MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
@@ -42,9 +42,9 @@ elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
     proj_end = 1400
     t_annotated = [50, 501, 953]
     nr_projs = proj_end - proj_start
-elif MAIN_DIR == "preprocessed_Alignment_5 (needles)":
-    proj_start = 35
-    proj_end = 1616
+elif MAIN_DIR == "preprocessed_Needles_Rotation_5degps":
+    proj_start = 20
+    proj_end = 1604
     nr_projs = proj_end - proj_start
     x = 50  # safety margin for start
 else:
@@ -59,7 +59,8 @@ for t in t_annotated:
 
 
 """ 2. Annotate the projections, for a description of markers, see `util.py`"""
-res_path = Path(__file__).parent / "resources"
+res_path = Path(PROJS_PATH) / "calibration"
+# res_path = Path(__file__).parent / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
@@ -79,7 +80,8 @@ pre_geoms = triangle_geom(SOURCE_RADIUS, DETECTOR_RADIUS,
                           rotation=False, shift=False)
 srcs = [g.source for g in pre_geoms]
 dets = [g.detector for g in pre_geoms]
-angles = 2 * np.pi - ((np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi)
+# angles = 2 * np.pi - ((np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi)
+angles = (np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi
 multicam_geom = triple_camera_circular_geometry(
     srcs, dets, angles=angles, optimize_rotation=True)
 multicam_geom_flat = [g for c in multicam_geom for g in c]

@@ -1,0 +1,39 @@
+source_radius: 94.5
+detector_radius: 27.0
+detector_cols: 1548           # including ROI
+detector_rows: 1524           # including ROI
+detector_cols_spec: 1548      # also those outside ROI
+detector_rows_spec: 1524      # also those outside ROI
+detector_width_spec: 30.7     # cm, also outside ROI
+detector_height_spec: 30.2    # cm, also outside ROI
+detector_pixel_spec: 0.0198   # cm
+calibration_file: D:\XRay\2024-06-13 Rik\preprocessed_Needles_Rotation_5degps\calibration\geom_preprocessed_Needles_Rotation_5degps_calibrated_on_04jul2024.npy
+column_inner_diameter: 19.2   # cm
+column_outer_diameter: 20.0   # cm
+number_of_iterations: 50
+investigate_loss: True
+beam_hardening_correction:
+- False
+recon_volumes:    # in cm
+- side: 22.5
+  height: 25
+voxel_sizes:    # in cm
+- 0.025
+mask_sizes:     # mask diameter in cm
+- 19.5
+framerates:
+- 22Hz
+flowrates:
+- 70lmin
+initialize: ones
+empty: preprocessed_single-source_Empty
+full: preprocessed_single-source_Full
+dark: preprocessed_Dark
+measurements:
+- day: 13-06-2024
+  root: D:/XRay/2024-06-13 Rik
+  concentrations: 
+  - c: single-source
+    special: False
+    start: 10
+    end: 210
