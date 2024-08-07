@@ -43,8 +43,8 @@ def _astra_sirt_algo(
         cfg["ReconstructionDataId"] = volume_id
         cfg["ProjectionDataId"] = sinogram_id
         cfg["option"] = {"MinConstraint": min_constraint,
-                        "MaxConstraint": max_constraint,
-                        "ReconstructionMaskId": mask_id}
+                         "MaxConstraint": max_constraint,
+                         "ReconstructionMaskId": mask_id}
 
         algo_id = astra.algorithm.create(cfg)
     astra.algorithm.run(algo_id, iters)  # nr iters

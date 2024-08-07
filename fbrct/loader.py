@@ -124,15 +124,13 @@ def load(
                 tqdm.write(f"Reading {detector_timesteps[d][t]}")
             if average:
                 ims[0, d_i, rows] += tifffile.imread(detector_timesteps[d][t], maxworkers=1)[
-                # imageio.v2.imread(nested_dict[d][t])[
-                        detector_rows][0]
+                    detector_rows][0]
                 count += 1
             else:
-            # faster but imageio may be easier to install
+                # faster but imageio may be easier to install
                 ims[t_i, d_i, rows] = \
                     tifffile.imread(detector_timesteps[d][t], maxworkers=1)[
-                    # imageio.v2.imread(nested_dict[d][t])[
-                            detector_rows]
+                        detector_rows]
     if average:
         ims /= count
 
