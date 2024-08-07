@@ -10,6 +10,7 @@ from joblib import Memory
 from fbrct.loader import (
     _apply_darkfields, _scatter_correct,
     reference_via_mode, compute_bed_density, load, preprocess)
+from fbrct import column_mask
 
 # we use joblibs `Memory` to cache long results
 path = pathlib.Path(__file__).parent.resolve()
@@ -182,6 +183,8 @@ class Reconstruction:
         scatter_mean_full: float = 0.0,
         scatter_mean_empty: float = 0.0,
         averaged: bool = False,
+        correct_beam_hardening: bool = False,
+        BHC: dict = {'a': 1, 'b': 1, 'c': 2}
     ):
         """Loads and preprocesses the sinogram."""
 
@@ -195,6 +198,9 @@ class Reconstruction:
             load_kwargs["detector_rows"] = detector_rows
         if averaged:
             load_kwargs["average"] = True
+        if correct_beam_hardening:
+            load_kwargs["correct_beam_hardening"] = True
+            load_kwargs["bhc"] = BHC
 
         dark = None
         if darks_path is not None:
@@ -324,15 +330,28 @@ class AstraReconstruction(Reconstruction):
         min_constraint=0.0,
         max_constraint=None,
         investigating_loss: bool = False,   # flag to log loss progression during iterations
-        **kwargs,
+        initialization: str = "flat",
+        r=None,
     ):
-        vol_id, vol_geom = self.empty_volume_gpu(voxels, voxel_size)
+        if initialization == "parabolic":
+            init = column_mask(
+                voxels,
+                r,
+                val=lambda x, y: max(1 - (x/r)**2 - (y/r)**2, 0)
+            )
+            init = np.transpose(init, [2, 1, 0])
+            # create column mask, where value is not 1, but dependent on a - b * y**2 - c * x**2
+        elif initialization == "ones":
+            init = 1.0
+        else:
+            init = None
+        vol_id, vol_geom = self.volume_gpu(voxels, voxel_size, init)
 
         print("Algorithm starts...")
         algo = algo.lower()
         if algo == "sirt":
-            from fbrct import column_mask
-            col_mask = column_mask(voxels, **kwargs)
+            # from fbrct import column_mask
+            col_mask = column_mask(voxels, r)
             col_mask = np.transpose(col_mask, [2, 1, 0])
             mask_id, _ = self.volume_gpu(voxels, voxel_size, col_mask)
             if investigating_loss:
@@ -360,6 +379,7 @@ class AstraReconstruction(Reconstruction):
                 )
         elif algo == "fdk":
             _astra_fdk_algo(vol_geom, proj_geom, vol_id, proj_id)
+            loss = None
         else:
             raise ValueError("Algorithm value incorrect.")
 
