@@ -231,7 +231,7 @@ def astra_reco_rotation_singlecamera(
     **kwargs):
     vectors = np.array([geom2astravec(g, reco.detector) for g in geoms])
     proj_id, proj_geom = reco.sino_gpu_and_proj_geom(data, vectors)
-    vol_id, vol_geom = reco.backward(
+    vol_id, vol_geom, _ = reco.backward(
         proj_id, proj_geom, algo=algo, voxels=voxels,
         voxel_size=voxel_size, **kwargs)
     return vol_id, vol_geom
