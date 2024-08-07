@@ -68,6 +68,8 @@ def load(
     cameras: Sequence = (1, 2, 3),
     detector_rows: Sequence = None,
     average: bool = False,
+    correct_beam_hardening: bool = False,
+    bhc: dict = {'a': 1.0, 'b': 1.0, 'c': 3.0}
 ):
     """Load a stack of data from disk using a pattern."""
 
@@ -93,6 +95,7 @@ def load(
         rows = slice(0, im_shape[0])
     else:
         rows = slice(detector_rows.start, detector_rows.stop)
+
     if average:
         ims = np.zeros((1, len(cameras), *im_shape), dtype=dtype)
     else:
@@ -132,6 +135,9 @@ def load(
                             detector_rows]
     if average:
         ims /= count
+
+    if correct_beam_hardening:
+        ims = bhc['a'] * ims + bhc['b'] * ims**bhc['c']
     return np.ascontiguousarray(ims)
 
 
