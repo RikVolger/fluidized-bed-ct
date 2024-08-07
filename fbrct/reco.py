@@ -100,7 +100,7 @@ class Reconstruction:
         return reduced
 
     @staticmethod
-    @memory.cache
+    # @memory.cache
     def _compute_or_restore_ref(ref_path,
                                 ref_projs,
                                 ref_full,
@@ -120,7 +120,7 @@ class Reconstruction:
         """This function avoids loading the entire stack of files when
         the reference is already computed and stored by using the
         @memory.cache decorator. If you need to recompute, delete files
-        in cache."""
+        in ../cache/joblib/fbrct/reco."""
 
         ref = load(ref_path, ref_projs, **load_kwargs)
         if dark is not None:

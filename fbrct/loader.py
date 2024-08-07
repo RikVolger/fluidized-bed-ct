@@ -139,7 +139,7 @@ def load(
     return np.ascontiguousarray(ims)
 
 
-@memory.cache
+# @memory.cache
 def reference_via_mode(data, qu=1, deg=20, nr_bins=100, nr_linspace=1000):
     xp = np
     data = xp.asarray(data)
