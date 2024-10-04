@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 plt.rc('font', size=14)
 
 blues9 = [
-    '#ef3b2c',
+    '#3e3333',
     '#f7fbff',
     '#deebf7',
     '#c6dbef',
@@ -49,18 +49,22 @@ vertical_plane = np.rot90(reconstruction[:, vline, :])
 # Planes plot
 fig, axs = plt.subplots(1, 2, layout='constrained', figsize=(6, 4))
 # Vertical plane
-axs[0].imshow(vertical_plane, cmap=blues9_map, aspect='equal', vmin=0, vmax=0.9)
+axs[0].imshow(vertical_plane, cmap=blues9_map, aspect='equal', vmin=0, vmax=0.5)
 axs[0].axis('off')
 axs[0].set_title("Vertical plane")
 # Horizontal plane
 # Store axes handle for colorbar.
-im = axs[1].imshow(horizontal_plane, cmap=blues9_map, aspect='equal', vmin=0, vmax=0.9)
+im = axs[1].imshow(horizontal_plane, cmap=blues9_map, aspect='equal', vmin=0, vmax=0.5)
 axs[1].axis('off')
 axs[1].set_title("Horizontal plane")
 # Create a colorbar to the right of subplots.
-cb = fig.colorbar(im, ax=axs, location="right", aspect=10)
-cb.ax.set_title("Gas fraction")
+cb = fig.colorbar(im, ax=axs, location="right", aspect=10, orientation='vertical', label='Gas fraction')
 fig.suptitle("Cross-sections of reconstruction")
+
+save_location = Path("D:\XRay\output\presentation")
+print(f"Saving image {save_location / 'recon-slices'}")
+fig.savefig(save_location / "recon_slices.png", dpi=300)
+fig.savefig(save_location / "recon_slices.svg", transparent=True)
 
 # losses plot
 fig, ax = plt.subplots(1, 1, figsize=(4, 3), layout='constrained')
@@ -81,6 +85,3 @@ ax.set_title("Axial holdup profile")
 ax.set_ylabel("Gas fraction")
 
 plt.show()
-# print(f"Saving image {out_folder / out_subfolder / conc}")
-# fig.savefig(out_folder / out_subfolder / f"{conc}.png", dpi=300)
-# fig.savefig(out_folder / out_subfolder / f"{conc}.pdf", dpi=900)
