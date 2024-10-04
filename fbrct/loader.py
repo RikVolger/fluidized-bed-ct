@@ -224,6 +224,7 @@ def compute_bed_density(empty, ref, L: float, nr_bins=1000,
                         max_bed_val=1.0) -> float:
     """Computes the average bed density along a ray with length L, using an
     empty column, histogram with `nr_bins` bins."""
+    # ref is generally the full image.
 
     # computing log(ref/meas) / log(ref)
     # should be normalized between 0 and 1
@@ -238,29 +239,33 @@ def compute_bed_density(empty, ref, L: float, nr_bins=1000,
 
     # TODO Why is this here? Should already be covered by previous lines, right?
     np.clip(bed, 0.0, None, out=bed)
-
+    # np.divide(bed, L, out=bed)
+    modal_values = np.zeros(bed.shape)
     sum = 0.0
     for i in range(bed.shape[0]):
-        counts, bins = np.histogram(bed[i].flatten(), bins=nr_bins)
+        counts, bins = np.histogram(bed[i, :, 500:1000].flatten(), bins=nr_bins)
         counts[:100] = 0.0
         max_value = bins[np.argmax(counts)]  # corresponds to inner diam
         print(f"Proj {i}: mode of column statistic: ", max_value)
         print(f"Proj {i}: density approx.: ", 1 / L * max_value)
         # import matplotlib.pyplot as plt
         # plt.figure()
-        # plt.hist(bed.flatten(), bins=1000)
+        # plt.hist(bed[i, :, 500:1000].flatten(), bins=1000)
         # plt.show()
         sum += (1 / L) * max_value
+        modal_values[i, ...] = max_value / L
 
     avg = sum / bed.shape[0]  # average density over nr. projs/cams
     print("Average density: ", avg)
-    return avg
+    return modal_values
+    # return avg
+    # return bed
 
 
 def preprocess(
     meas,
     ref=None,
-    scaling_factor=1.0,
+    density_factor=1.0,
     dtype=np.float32,
     ref_full=True,
 ):
@@ -283,7 +288,7 @@ def preprocess(
         np.clip(meas, 1.0, None, out=meas)
 
     np.log(meas, out=meas)
-    np.multiply(meas, scaling_factor, out=meas)
+    np.divide(meas, density_factor, out=meas, where=density_factor != 0)
     _isfinite(meas)
     return meas.astype(dtype)
 
