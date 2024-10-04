@@ -7,24 +7,26 @@ detector_rows_spec: 1524      # also those outside ROI
 detector_width_spec: 30.7     # cm, also outside ROI
 detector_height_spec: 30.2    # cm, also outside ROI
 detector_pixel_spec: 0.0198   # cm
-calibration_file: C:\Users\rikvolger\Codebase\fluidized-bed-ct-rik\scripts\calib\resources\geom_preprocessed_Alignment_5 (needles)_calibrated_on_06feb2024.npy
+calibration_file: D:\XRay\2024-06-13 Rik\preprocessed_Needles_Rotation_5degps\calibration\geom_preprocessed_Needles_Rotation_5degps_calibrated_on_04jul2024.npy
 column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
 number_of_iterations: 200
 investigate_loss: True
+beam_hardening_correction:
+- False
 recon_volumes:    # in cm
 - side: 30
-  height: 15
+  height: 25
 - side: 27.5
-  height: 15
+  height: 25
 - side: 25
-  height: 15
+  height: 25
 - side: 22.5
-  height: 15
+  height: 25
 - side: 20
-  height: 15
+  height: 25
 - side: 19.2
-  height: 15
+  height: 25
 voxel_sizes:    # in cm
 - 0.03
 mask_sizes:     # mask diameter in cm
@@ -33,32 +35,19 @@ framerates:
 - 22Hz
 # - 120Hz
 flowrates:
-- 30lmin
-- 150lmin
-empty: preprocessed_Empty
-dark: 0lmin
+- 10lmin
+- 40lmin
+- 70lmin
+- 110lmin
+initialize: ones
+empty: preprocessed_single-source_Empty
+full: preprocessed_single-source_Full
+dark: preprocessed_Dark
 measurements:
-- day: 22-11-2023
-  root: D:/XRay/2023-11-22 Rik
+- day: 13-06-2024
+  root: D:/XRay/2024-06-13 Rik
   concentrations: 
-  - c001
-- day: 23-11-2023
-  root: D:/XRay/2023-11-23 Rik
-  concentrations:
-  - c005
-- day: 24-11-2023
-  root: D:/XRay/2023-11-24 Rik
-  concentrations:
-  - c013
-- day: 27-11-2023
-  root: D:/XRay/2023-11-27 Rik
-  concentrations:
-  - c016
-- day: 05-12-2023
-  root: D:/XRay/2023-12-05 Rik
-  concentrations:
-  - c052
-- day: 06-12-2023
-  root: D:/XRay/2023-12-06 Rik
-  concentrations:
-  - c071
+  - c: single-source
+    special: False
+    start: 10
+    end: 210

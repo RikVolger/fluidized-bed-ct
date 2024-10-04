@@ -39,56 +39,34 @@ loss:
     concentrations:
     - c071
 volume_side:
+  out_folder: D:\XRay\output\scatter_comparison
   concentrations:
-  - c001
-  - c005
-  - c013
-  - c016
-  - c052
-  - c071
-  recon_volumes:
-  - side: 30
-    height: 15
-  - side: 27.5
-    height: 15
-  - side: 25
-    height: 15
-  - side: 22.5
-    height: 15
-  - side: 20
-    height: 15
-  - side: 19.2
-    height: 15
+  - single-source
   framerate: 22Hz
   flowrates:
-  - 30lmin
-  - 150lmin
+  - 10lmin
+  - 40lmin
+  - 70lmin
+  - 110lmin
+  recon_volumes:
+  - side: 30
+    height: 25
+  - side: 27.5
+    height: 25
+  - side: 25
+    height: 25
+  - side: 22.5
+    height: 25
+  - side: 20
+    height: 25
+  - side: 19.2
+    height: 25
   iterations: 200
   measurements:
-  - day: 22-11-2023
-    root: D:/XRay/2023-11-22 Rik
-    concentrations:
-    - c001
-  - day: 23-11-2023
-    root: D:/XRay/2023-11-23 Rik
-    concentrations:
-    - c005
-  - day: 24-11-2023
-    root: D:/XRay/2023-11-24 Rik
-    concentrations:
-    - c013
-  - day: 27-11-2023
-    root: D:/XRay/2023-11-27 Rik
-    concentrations:
-    - c016
-  - day: 05-12-2023
-    root: D:/XRay/2023-12-05 Rik
-    concentrations:
-    - c052
-  - day: 06-12-2023
-    root: D:/XRay/2023-12-06 Rik
-    concentrations:
-    - c071
+  - day: 13-06-2024
+    root: D:/XRay/2024-06-13 Rik
+    concentrations: 
+    - single-source
 volume_height:
   concentrations:
   - c001
@@ -138,99 +116,118 @@ volume_height:
     - c071
 mask:
   concentrations:
-  - c001
-  - c005
-  - c013
-  - c016
-  - c052
-  - c071
+  - single-source
   mask_sizes:
   - 19
+  - 19.5
   - 20
+  - 20.5
   - 21
-  - 22
-  - 23
+  - 21.5
   recon_volume:
-  - side: 25
-    height: 15
+  - side: 22.5
+    height: 25
   framerate: 22Hz
   flowrates:
-  - 30lmin
-  - 150lmin
+  - 10lmin
+  - 40lmin
+  - 70lmin
+  - 110lmin
   iterations: 200
   measurements:
-  - day: 22-11-2023
-    root: D:/XRay/2023-11-22 Rik
+  - day: 13-06-2024
+    root: D:/XRay/2024-06-13 Rik
     concentrations:
-    - c001
-  - day: 23-11-2023
-    root: D:/XRay/2023-11-23 Rik
-    concentrations:
-    - c005
-  - day: 24-11-2023
-    root: D:/XRay/2023-11-24 Rik
-    concentrations:
-    - c013
-  - day: 27-11-2023
-    root: D:/XRay/2023-11-27 Rik
-    concentrations:
-    - c016
-  - day: 05-12-2023
-    root: D:/XRay/2023-12-05 Rik
-    concentrations:
-    - c052
-  - day: 06-12-2023
-    root: D:/XRay/2023-12-06 Rik
-    concentrations:
-    - c071
+    - single-source
 voxel_size:
   concentrations:
-  - c001
-  - c005
-  - c013
-  - c016
-  - c052
-  - c071
+  - single-source
   recon_volume:    # in cm
   - side: 22.5
-    height: 30
+    height: 25
   voxel_sizes:    # in cm
   - 0.025
-  - 0.03
-  - 0.04
-  - 0.05
-  - 0.10
-  - 0.2
+  - 0.02375
+  - 0.0225
+  - 0.02125
+  - 0.020
+  framerate: 22Hz
+  flowrates:
+  - 10lmin
+  - 110lmin
+  iterations: 50
+  measurements:
+  - day: 13-06-2024
+    root: D:/XRay/2024-06-13 Rik
+    concentrations:
+    - single-source
+BHC:
+  concentrations:
+  - c001
+  - c071
   framerate: 22Hz
   flowrates:
   - 30lmin
   - 150lmin
-  iterations: 200
+  - Empty
+  - Full
+  recon_volume:
+  - side: 20
+    height: 25
+  iterations: 50
   measurements:
   - day: 22-11-2023
     root: D:/XRay/2023-11-22 Rik
-    concentrations:
+    concentrations: 
     - c001
-  - day: 23-11-2023
-    root: D:/XRay/2023-11-23 Rik
-    concentrations:
-    - c005
-  - day: 24-11-2023
-    root: D:/XRay/2023-11-24 Rik
-    concentrations:
-    - c013
-  - day: 27-11-2023
-    root: D:/XRay/2023-11-27 Rik
-    concentrations:
-    - c016
-  - day: 05-12-2023
-    root: D:/XRay/2023-12-05 Rik
-    concentrations:
-    - c052
   - day: 06-12-2023
     root: D:/XRay/2023-12-06 Rik
     concentrations:
     - c071
+init:
+  concentrations:
+  - c001
+  - c071
+  framerate: 22Hz
+  flowrates:
+  - 30lmin
+  - 150lmin
+  - Empty
+  - Full
+  recon_volume:
+  - side: 20
+    height: 25
+  iterations: 50
+  measurements:
+  - day: 22-11-2023
+    root: D:/XRay/2023-11-22 Rik
+    concentrations: 
+    - c001
+  - day: 06-12-2023
+    root: D:/XRay/2023-12-06 Rik
+    concentrations:
+    - c071
+scatter:
+  out_folder: D:\XRay\output\scatter_comparison
+  concentrations:
+  - single-source
+  framerate: 22Hz
+  flowrates:
+  - 10lmin
+  - 40lmin
+  - 70lmin
+  - 110lmin
+  recon_volume:
+  - side: 20
+    height: 25
+  iterations: 200
+  scatter:
+  - single-source
+  measurements:
+  - day: 13-06-2024
+    root: D:/XRay/2024-06-13 Rik
+    concentrations: 
+    - single-source
 all:
 - day: 22-11-2023
   root: D:/XRay/2023-11-22 Rik

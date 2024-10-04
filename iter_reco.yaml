@@ -12,6 +12,8 @@ column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
 number_of_iterations: 200
 investigate_loss: True
+beam_hardening_correction:
+- False
 recon_volumes:  # in cm
 - side: 25
   height: 15
