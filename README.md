@@ -20,7 +20,7 @@ Then download this package:
 ```shell
 git clone https://github.com/RikVolger/fluidized-bed-ct.git
 ```
-Currently, the repositories do not contain a _setup.py_. To run a script, 
+Currently, the repositories do not contain a _setup.py_. To run a script (e.g. `some_script.py`), 
 make sure that Python finds the modules by setting the _PYTHONPATH_ 
 environment variable, e.g.:
 ```shell
