@@ -12,7 +12,7 @@ For an installation with _conda_ (or _mamba_, preferred), run:
 ```shell
 conda create -n fluidized_bed_ct python=3.10
 conda activate fluidized_bed_ct
-conda install numpy scipy imageio matplotlib joblib tqdm pyqtgraph -c conda-forge
+conda install numpy scipy imageio matplotlib joblib tqdm pyqtgraph conda-build -c conda-forge
 conda install astra-toolbox -c astra-toolbox/label/dev
 ```
 
@@ -21,11 +21,11 @@ Then download this package:
 git clone https://github.com/RikVolger/fluidized-bed-ct.git
 ```
 Currently, the repositories do not contain a _setup.py_. To run a script (e.g. `some_script.py`), 
-make sure that Python finds the modules by setting the _PYTHONPATH_ 
-environment variable, e.g.:
+make sure that Python finds the modules by addint the folder to _PYTHONPATH_ e.g. through `conda develop`:
 ```shell
+cd path/to/fluidized-bed-ct
 conda activate fluidized_bed_ct
-PYTHONPATH=path/to/fbrct python some_script.py
+conda develop .
 ```
 
 ## 2. Run a calibration
