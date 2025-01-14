@@ -8,7 +8,10 @@ scripts allow
  - reconstruction of a dynamic fluidized bed, using three angles per timestep.
 
 ## 1. Installation
-For an installation with _conda_ (or _mamba_, preferred), run:
+If you don't have _conda_ installed, find some installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Do **not** use the TU Delft Software Center version of anaconda.
+
+
+For an installation with _conda_ (or _mamba_, preferred), open a terminal window and run:
 ```shell
 conda create -n fluidized_bed_ct python=3.10
 conda activate fluidized_bed_ct
@@ -16,25 +19,26 @@ conda install numpy scipy imageio matplotlib joblib tqdm pyqtgraph conda-build -
 conda install astra-toolbox -c astra-toolbox/label/dev
 ```
 
+In the terminal, navigate to the folder where you want to keep the code (preferably local, on the `C:` drive \[for Windows\]).
 Then download this package:
 ```shell
 git clone https://github.com/RikVolger/fluidized-bed-ct.git
 ```
 Currently, the repositories do not contain a _setup.py_. To run a script (e.g. `some_script.py`), 
-make sure that Python finds the modules by addint the folder to _PYTHONPATH_ e.g. through `conda develop`:
+make sure that Python finds the modules by adding the folder to _PYTHONPATH_ e.g. through `conda develop`:
 ```shell
 cd path/to/fluidized-bed-ct
 conda activate fluidized_bed_ct
 conda develop .
 ```
 
-## 2. Run a calibration
-
-First install the _CaTE_ scripts are available to Python.
+The calibration relies on the _CaTE_ scripts. Install these in the same folder:
 
 ```shell
 git clone https://github.com/adriaangraas/cate
 ```
+
+## 2. Run a calibration
 
 In **scripts/calib/** there are scripts that show how to calibrate the
 geometry using a marker object with glued metal markers on it. The scripts can
