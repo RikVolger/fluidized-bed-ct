@@ -60,6 +60,10 @@ for t in t_annotated:
 
 """ 2. Annotate the projections, for a description of markers, see `util.py`"""
 res_path = Path(PROJS_PATH) / "calibration"
+if not res_path.is_dir():
+    # Create a folder for the resources (marker locations, geometries)
+    res_path.mkdir()
+
 # res_path = Path(__file__).parent / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
