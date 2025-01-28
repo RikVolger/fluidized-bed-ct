@@ -11,13 +11,13 @@ detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
                                DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT)
 
 # directory of the calibration scan
-DATA_DIR_CALIB = "/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
-MAIN_DIR_CALIB = "pre_proc_VROI500_1000_Cal_20degsec"
+DATA_DIR_CALIB =  R"D:/XRay/2024-11-14 Rik en Sam" #Path(r"D:\XRay\2024-11-14 Rik en Sam\preprocessed_Rotation_needles_5degps_again\calibration")#"/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
+MAIN_DIR_CALIB = "preprocessed_Rotation_needles_5degps_again/calibration"
 
 # directory of a sbi_scan to reconstruct (can be different or same to calib)
-DATA_DIR = Path(
-    "/run/media/adriaan/Elements/academic/data/ownCloud_Sophia_SBI/VROI500_1000")
-MAIN_DIR = "pre_proc_VROI500_1000_Cal_20degsec"
+DATA_DIR = R"D:/XRay/2024-11-14 Rik en Sam" #Path(r"D:\XRay\2024-11-14 Rik en Sam\preprocessed_Rotation_needles_5degps_again\calibration")
+    #"/run/media/adriaan/Elements/academic/data/ownCloud_Sophia_SBI/VROI500_1000")
+MAIN_DIR = "preprocessed_Rotation_needles_5degps_again/calibration"
 PROJS_PATH = f'{DATA_DIR}/{MAIN_DIR}'
 
 # configure which projection range to take
@@ -33,29 +33,52 @@ elif MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
     nr_projs = proj_end - proj_start
 elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
     nr_projs = 1371  # a guess
+elif MAIN_DIR == "preprocessed_Rotation_needles_5degps_again/calibration":
+    proj_start = 20
+    proj_end = 1604
+    nr_projs = proj_end - proj_start
+    x = 50  # safety margin for start
 else:
     raise Exception()
 
 # postfix of stored claibration
-POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_13june2023'
+POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_14janc2025'
+POSTFIX = f'preprocessed_Rotation_needles_5degps_again_calibrated_on_14janc2025'
 
 t = [497, 958, 1223]
 t_annotated = [497, 958, 1223]
 
+######
+proj_start = 27 # needs to be changed (see part01)
+proj_end = 1610 # needs to be changed (see part01)
+nr_projs = proj_end - proj_start
+t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
+print(f't_anootated = {t_annotated}')
+#######
+# t_annotated = None
+# if t_annotated is None:
+#     n_annotated = 6
+#     t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
+##############
+
+#base_path = R"D:/XRay/2024-11-14 Rik en Sam/preprocessed_Rotation_needles_5degps_again/calibration"#Path(r'D:\XRay\2024-11-14 Rik en Sam\preprocessed_Rotation_needles_5degps_again\calibration')
 # restore calibration
-multicam_geom = np.load(f'multicam_geom_{POSTFIX}.npy', allow_pickle=True)
-geom = np.load(f'geom_{POSTFIX}.npy', allow_pickle=True)
-markers = np.load(f'markers_{POSTFIX}.npy', allow_pickle=True).item()
+#multicam_geom = np.load(base_path / f'multicam_geom_preprocessed_Rotation_needles_5degps_again_calibrated_on_14janc2025.npy', allow_pickle=True)#f'multicam_geom_{POSTFIX}.npy', allow_pickle=True)
+multicam_geom = np.load(f'scripts/calib/multicam_geom_{POSTFIX}.npy', allow_pickle=True) 
+geom = np.load( f'scripts\\\calib\\\geom_{POSTFIX}.npy', allow_pickle=True)
+markers = np.load( f'scripts\\\calib\\\markers_{POSTFIX}.npy', allow_pickle=True).item()
 
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
-    fname=MAIN_DIR,
+    fname="preprocessed_Rotation_needles_5degps_again",#MAIN_DIR,
+    resource_path=PROJS_PATH,#f'scripts/calib/geom_preprocessed_Rotation_needles_5degps_again_calibrated_on_14janc2025.npy',
     cameras=[1, 2, 3],
     open_annotator=False,  # set to `True` if images have not been annotated
     vmin=6.0,
     vmax=10.0,
 )
+print(multicam_data[1][0])
 cate_astra.pixels2coords(multicam_data, detector)  # convert to physical coords
 
 # for cam in (1, 2, 3):

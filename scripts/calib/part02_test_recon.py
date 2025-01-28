@@ -16,12 +16,12 @@ detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
 CALIB_FOLDER = Path(__file__).parent
 
 # directory of the calibration scan
-DATA_DIR_CALIB = R"D:\XRay\2024-06-13 Rik"
-MAIN_DIR_CALIB = "preprocessed_Needles_Rotation_5degps"
+DATA_DIR_CALIB = R"d:\XRay\2024-11-14 Rik en Sam"
+MAIN_DIR_CALIB = "preprocessed_Rotation_needles_5degps_again"
 
 # directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = R"D:\XRay\2024-06-13 Rik"
-MAIN_DIR = "preprocessed_Needles_Rotation_5degps"
+DATA_DIR = R"d:\XRay\2024-11-14 Rik en Sam"
+MAIN_DIR = "preprocessed_Rotation_needles_5degps_again"
 PROJS_PATH = f'{DATA_DIR}\{MAIN_DIR}'
 
 # configure which projection range to take
@@ -59,21 +59,30 @@ elif MAIN_DIR == "preprocessed_c058_0lmin_22Hz":
     t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
     t_range = [8]
     # t_range = np.linspace(proj_start, proj_end, 1, dtype=int)
-elif MAIN_DIR == "preprocessed_Needles_Rotation_5degps":
-    proj_start = 20
-    proj_end = 1604
+elif MAIN_DIR == "preprocessed_Rotation_needles_5degps_again":
+    proj_start = 27 #20
+    proj_end = 1610 #1604
     nr_projs = proj_end - proj_start
     x = 50  # safety margin for start
-    n_annotated = 6
-    t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
+    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
     t_range = range(proj_start, proj_end, 12)
+    
+    
+
+
 else:
     raise Exception()
 
 # postfix of stored claibration
 POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_04jul2024'
+POSTFIX = f'preprocessed_Rotation_needles_5degps_again_calibrated_on_14janc2025'
 
 t = t_annotated
+print(f't_annotated was: {t_annotated}')
+# n_annotated = 6
+# t_annotated = [np.ceil(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
+# print(f't_annotated is: {t_annotated}')
+
 # t = [497, 958, 1223]
 # t_annotated = [497, 958, 1223]
 
@@ -112,8 +121,9 @@ for cam_id in range(1, 4):
         interpolation_calibration_nrs=t_annotated,
         plot=False)
     all_geoms.extend(geoms_interp)
+
     projs = reco.load_sinogram(t_range=t_range, cameras=[cam_id],
-                               ref_full=False)
+                               ref_full=False) # ref_rotational = True?
     projs = prep_projs(projs)
     all_projs.append(projs)
 

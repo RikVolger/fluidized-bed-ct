@@ -232,7 +232,9 @@ class Reconstruction:
                 scatter_mean_full,
                 scatter_mean_empty)
 
-        if density_factor is None:
+        if density_factor is None and ref is None:
+            density_factor = 1.0
+        elif density_factor is None:
             density_factor = np.ones_like(ref)
 
         meas = load(self._path, t_range, t_offsets, **load_kwargs)
@@ -388,6 +390,7 @@ class AstraReconstruction(Reconstruction):
 
     @staticmethod
     def forward(volume_id, volume_geom, projection_geom, returnData=False):
+        import astra
         return astra.creators.create_sino3d_gpu(
             volume_id, projection_geom, volume_geom, returnData=returnData
         )

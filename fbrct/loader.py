@@ -11,7 +11,7 @@ from tifffile import tifffile
 import imageio
 from tqdm import tqdm
 
-PROJECTION_FILE_REGEX = "camera ([1-3])\\\img_([0-9]{1,6})\.tif$"
+PROJECTION_FILE_REGEX = "camera ([1-3])\\\img_([0-9]{1,7})\.tif$"
 
 # we use joblibs `Memory` to cache long results
 path = pathlib.Path(__file__).parent.resolve()
@@ -28,6 +28,7 @@ def _collect_fnames(
 
     results, results_filenames = [], []
     regex = re.compile(regex)
+    print(f'path in _collect_fnames:')
     print(path)
     for root, dirs, files in os.walk(path):
         for file in files:
@@ -72,13 +73,18 @@ def load(
     bhc: dict = {'a': 1.0, 'b': 1.0, 'c': 3.0}
 ):
     """Load a stack of data from disk using a pattern."""
-
+    
     results, results_filenames = _collect_fnames(path, regex)
+    print(f'results= {results}')
+    print(path)
+    #print(regex)
     # Check the results for continuity in the subsequences range
     lists = list(zip(*results))
-
+    
     first_cam = cameras[0]
+    print(f'first_cam = {first_cam}') ################################### debug
     amount_matches = lists[0].count(first_cam)
+    
     assert amount_matches > 0
     for cam in cameras:
         if average:
@@ -106,21 +112,25 @@ def load(
     detector_timesteps = {i: {} for i in cameras}
     for i, ((cam_id, t), filename) in enumerate(
         zip(results, results_filenames)):
+        
         if cam_id in cameras:
             t_actual = t - time_offsets[cam_id] if time_offsets is not None else t
             detector_timesteps[cam_id][t_actual] = filename
+            
 
     # check if wanted timesteps are in the dict, and load them
     count = 0
     for t_i, t in enumerate(tqdm(time_range)) if verbose else enumerate(
         time_range):
+        print(t)
         for d_i, d in enumerate(detector_timesteps.keys()):
             if not t in detector_timesteps[d]:
                 raise FileNotFoundError(
                     f"Could not find timestep {t} from "
                     f"detector {d} in directory {path}."
                 )
-            if verbose:
+            if verbose: 
+                
                 tqdm.write(f"Reading {detector_timesteps[d][t]}")
             if average:
                 ims[0, d_i, rows] += tifffile.imread(detector_timesteps[d][t],
@@ -134,6 +144,7 @@ def load(
 
     if correct_beam_hardening:
         ims = bhc['a'] * ims + bhc['b'] * ims**bhc['c']
+    
     return np.ascontiguousarray(ims)
 
 
@@ -286,7 +297,12 @@ def preprocess(
         np.clip(meas, 1.0, None, out=meas)
 
     np.log(meas, out=meas)
-    np.divide(meas, density_factor, out=meas, where=density_factor != 0)
+    print(f"meas type: {type(meas)}, dtype: {getattr(meas, 'dtype', 'unknown')}, shape: {getattr(meas, 'shape', 'unknown')}")
+    print(f"density_factor type: {type(density_factor)}, dtype: {getattr(density_factor, 'dtype', 'unknown')}, value: {density_factor}")
+    
+    #density_factor = np.array(density_factor, dtype=np.float32)
+    print(f"density_factor type: {type(density_factor)}, dtype: {getattr(density_factor, 'dtype', 'unknown')}, value: {density_factor}")
+    np.divide(meas, density_factor, out=meas, where=density_factor != 0) # gave error thus changed dtype of density_factor
     _isfinite(meas)
     return meas.astype(dtype)
 

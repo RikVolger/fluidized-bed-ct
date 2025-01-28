@@ -11,8 +11,8 @@ from fbrct.scan import (
     MovingPhantom,
 )
 
-SOURCE_RADIUS = 94.5
-DETECTOR_RADIUS = 27.0
+SOURCE_RADIUS = (71.4+72+70.8)/3+7.1+10 # average distance between source and column + tape measure + radius outer wall column # old value = 94.5
+DETECTOR_RADIUS = (15+14.7+15.2)/3+7.1+10 # average distance between detector and column + tape measure + radius outer wall column # old value = 27.0
 DETECTOR_COLS = 1548  # including ROI
 DETECTOR_ROWS = 1524  # including ROI
 DETECTOR_COLS_SPEC = 1548  # also those outside ROI

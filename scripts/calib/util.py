@@ -158,13 +158,19 @@ def annotated_data(
             points = DelftNeedleEntityLocations(
                 f"{resource_path}/{fname}_cam{cam}.npy",
                 t)
+            print(f'resource_path: {resource_path}')
+            print(f'projs_path = {projs_path}')
+            ################################################# HERE STILL 577
             if open_annotator:
+                
                 projs = _load_projs(projs_path, t_range=range(t, t + 1),
                                     camera=cam)
                 projs = np.squeeze(projs)
                 Annotator(points, projs, block=True, vmin=vmin, vmax=vmax)
-
+            
             l = points.locations()
+            
+            print(f'l= {l}')
             data[cam].append(l)
 
     return data
@@ -174,7 +180,7 @@ def triangle_geom(
     src_rad, det_rad, rotation=False, shift=False, fix_first_det=True,
 ):
     geoms = []
-    for i, src_a in enumerate([0, 2 / 3 * np.pi, 4 / 3 * np.pi]):
+    for i, src_a in enumerate([0, -2 / 3 * np.pi, -4 / 3 * np.pi]):
         det_a = src_a + np.pi  # opposing
         src = src_rad * np.array([np.cos(src_a), np.sin(src_a), 0])
         det = det_rad * np.array([np.cos(det_a), np.sin(det_a), 0])
@@ -262,6 +268,7 @@ def astra_reco(reco: Reconstruction,
 def astra_project(reco, vol_id, vol_geom, geoms):
     vectors = np.array([geom2astravec(g, reco.detector) for g in geoms])
     # zero-sinogram
+
     sino_id, proj_geom = reco.sino_gpu_and_proj_geom(0.0, vectors)
     proj_id = reco.forward(
         volume_id=vol_id,
