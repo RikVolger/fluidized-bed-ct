@@ -15,14 +15,13 @@ from scripts.pathbuilders import concpathbuilder, emptypathbuilder, fullpathbuil
 """0. Helper functions"""
 
 
-def create_empty_scan(root, framerate):
-    empty_dir = emptypathbuilder(root, framerate)
+def create_empty_scan(empty_dir):
     empty = StaticScan(
             "empty",
             DETECTOR,
             str(empty_dir),
-            proj_start=10,  # TODO
-            proj_end=210,  # TODO: set higher to reduce noise levels
+            proj_start=FRAMES['empty']['start'],  # TODO
+            proj_end=FRAMES['empty']['stop'],  # TODO: set higher to reduce noise levels
             is_full=False,
             is_rotational=False,  # TODO: check, the column should not rotate!
             geometry=CALIBRATION_FILE,
@@ -32,14 +31,13 @@ def create_empty_scan(root, framerate):
     return empty
 
 
-def create_full_scan(root, c, framerate):
-    full_dir = fullpathbuilder(root, c, framerate)
+def create_full_scan(full_dir):
     full = StaticScan(  # example: a full scan that is not rotating
             "full",  # give the scan a name
             DETECTOR,
             str(full_dir),
-            proj_start=30,  # TODO
-            proj_end=210,  # TODO: set higher for less noise
+            proj_start=FRAMES['full']['start'],  # TODO
+            proj_end=FRAMES['full']['stop'],  # TODO: set higher for less noise
             is_full=True,
             is_rotational=False,  # TODO: check, the column should not rotate!
             geometry=CALIBRATION_FILE,
@@ -49,19 +47,13 @@ def create_full_scan(root, c, framerate):
     return full
 
 
-def create_avg_scan(root, conc, gasflow, framerate):
-    if not conc['special']:
-        t_avg_dir = concpathbuilder(root, conc['c'], gasflow, framerate)
-    elif conc['special'] == "Empty":
-        t_avg_dir = emptypathbuilder(root, framerate)
-    elif conc['special'] == "Full":
-        t_avg_dir = fullpathbuilder(root, conc['c'], framerate)
+def create_avg_scan(scan_dir):
     t_avg = AveragedScan(
-            f"{conc['c']}_{gasflow}_{framerate}",
+            scan_dir.name,
             DETECTOR,
-            str(t_avg_dir),
-            proj_start=conc['start'],
-            proj_end=conc['end'],
+            str(scan_dir),
+            proj_start=FRAMES['measurements']['start'],
+            proj_end=FRAMES['measurements']['stop'],
             # liter_per_min=None,  # liter per minute (set None to ignore)
             # projs=range(5, 2640),  # TODO: set this to a valid range
             projs_offset={1: 0, 2: 0, 3: 0},
@@ -92,7 +84,7 @@ def reconstruct(t_avg, recon, algo, sino_t, niters, voxel_size, recon_size, mask
                 max_constraint=1.0,
                 r=int(mask_size/2/voxel_size),
                 investigating_loss=INVESTIGATING_LOSS,
-                initialization=init
+                initialization=init,
                 # col_mask=True,
                 )
     x = recon.volume(vol_id)
@@ -100,9 +92,61 @@ def reconstruct(t_avg, recon, algo, sino_t, niters, voxel_size, recon_size, mask
     return loss, x
 
 
+def find_path(key, exp_ref, day_ref, global_ref):
+    if key in exp_ref.keys():
+        path = Path(root, exp_ref[key])
+    elif key in day_ref.keys():
+        path = Path(root, day_ref[key])
+    elif key in global_ref.keys():
+        path = Path(global_ref[key])
+    else:
+        raise Exception(
+            f"No {key} path provided for reconstruction of "
+            f"{experiment['measured']}"
+        )
+
+    return path
+
+
+def get_ref_paths(exp_ref, day_ref, global_ref):
+    """find the most local path for 'empty', 'dark' and 'full' measurements
+
+    Args:
+        exp_ref (dict): Dictionary of experiment-specific reference paths
+        day_ref (dict): Dictionary of day-specific reference paths
+        global_ref (dict): Dictionary of global reference paths
+
+    Returns:
+        dict: Most local paths for 'empty', 'full' and 'dark' measurements
+    """
+    keys = ['empty', 'full', 'dark']
+    paths = {}
+    for key in keys:
+        paths[key] = find_path(key, exp_ref, day_ref, global_ref)
+
+    return paths
+
+
+def find_refs(src, keys=['empty', 'dark', 'full']):
+    """Find reference measurement directories for `keys` in `src`
+
+    Args:
+        src (dict): Dictionary that can contain one or more `keys`
+        keys (list): Keys to search for in `src`. Defaults to ['empty', 'dark', 'full']
+
+    Returns:
+        dict: Dictionary with the `keys` found in `src`
+    """
+    ref_dirs = {}
+    for key in keys:
+        if key in src.keys():
+            ref_dirs[key] = src[key]
+    return ref_dirs
+
+
 """1. Configuration of set-up and calibration"""
 # load scans.yaml
-with open("./scatter_scans_reco.yaml") as scans_yaml:
+with open("./sam_scans.yaml") as scans_yaml:
     scans = yaml.safe_load(scans_yaml)
 
 PLOTTING = False
@@ -137,6 +181,7 @@ DETECTOR = {
     "pixel_height": DETECTOR_PIXEL_HEIGHT,
 }
 CALIBRATION_FILE = scans['calibration_file']
+FRAMES = scans['frames']
 INVESTIGATING_LOSS = scans['investigate_loss']
 NITERS = scans['number_of_iterations']
 COLUMN_ID = scans['column_inner_diameter']      # Maybe rename, 'ID' can be confusing.
@@ -145,7 +190,7 @@ RECON_VOLUMES = scans['recon_volumes']
 VOXEL_SIZES = scans['voxel_sizes']
 MASK_SIZES = scans['mask_sizes']
 CORRECT_BEAM_HARDENING = scans['beam_hardening_correction']
-if any(CORRECT_BEAM_HARDENING):
+if CORRECT_BEAM_HARDENING:
     assert 'BHC' in scans.keys()
     BHC = {
         'a': scans['BHC']['a'],
@@ -174,21 +219,28 @@ some starting frames are jittered and must be skipped.
    been computed.
 """
 
+# load global 'empty', 'dark' and 'full' measurements, if provided
+global_ref = find_refs(scans)
 
 # Iterate over measurement folders
-for series in scans['measurements']:
+for day in scans['measurements']:
     # extract root
-    root = series['root']
+    root = day['root']
+    # load day-reference measurements, if provided
+    day_ref = find_refs(day)
+
     # TODO Catch file not found errors, write to log file and continue.
-    iterable_product = itertools.product(
-        series['concentrations'],
-        scans['flowrates'],
-        scans['framerates'],
-        CORRECT_BEAM_HARDENING)
-    for conc, gasflow, framerate, bhc in iterable_product:
-        empty = create_empty_scan(root, framerate)
-        full = create_full_scan(root, conc['c'], framerate)
-        t_avg = create_avg_scan(root, conc, gasflow, framerate)
+    for experiment in day['reconstructions']:
+        # load experiment-reference measurements, if provided
+        exp_ref = find_refs(experiment)
+
+        ref_paths = get_ref_paths(exp_ref, day_ref, global_ref)
+        exp_path = Path(day['root'], experiment['measured'])
+
+        empty = create_empty_scan(ref_paths['empty'])
+        full = create_full_scan(ref_paths['full'])
+        # dark = create_dark_scan(ref_paths['dark'])
+        t_avg = create_avg_scan(exp_path)
 
         timeframes = range(t_avg.proj_start, t_avg.proj_end)
 
@@ -215,15 +267,15 @@ for series in scans['measurements']:
             empty_path=empty.projs_dir,
             empty_rotational=empty.is_rotational,
             empty_projs=[p for p in range(empty.proj_start, empty.proj_end)],
-            darks_ran=range(10, 200),
-            darks_path="D:\\XRay\\2024-06-13 Rik\\preprocessed_Dark_22Hz",
+            darks_ran=range(FRAMES['dark']['start'], FRAMES['dark']['stop']),
+            darks_path=ref_paths['dark'],
             ref_full=ref.is_full,
             density_factor=t_avg.density_factor,
             col_inner_diameter=t_avg.col_inner_diameter,
             # scatter_mean_full=600,
             # scatter_mean_empty=500,
             averaged=True,
-            correct_beam_hardening=bhc
+            correct_beam_hardening=CORRECT_BEAM_HARDENING
         )
 
         algo = 'sirt'
@@ -261,17 +313,12 @@ for series in scans['measurements']:
                     resolution=len(VOXEL_SIZES) > 1,
                     mask=len(MASK_SIZES) > 1,
                     init=INITIALIZATION,
-                    bhc=bhc,
+                    bhc=CORRECT_BEAM_HARDENING,
                     recon_size=recon_size,
                     voxel_size=voxel_size,
                     mask_size=mask_size)
 
-                if not conc['special']:
-                    full_path = concpathbuilder(root, conc['c'], gasflow, framerate) / filename
-                elif conc['special'] == "Empty":
-                    full_path = emptypathbuilder(root, framerate) / filename
-                elif conc['special'] == "Full":
-                    full_path = fullpathbuilder(root, conc['c'], framerate) / filename
+                full_path = exp_path / filename
 
                 print(f"Saving {full_path}")
                 # scio.savemat(full_path, dataset, do_compression=True)

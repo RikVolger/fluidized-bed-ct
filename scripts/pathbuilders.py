@@ -7,17 +7,21 @@ def pathbuilder(root, parts):
     return Path(root, "_".join([part for part in parts if part]))
 
 
-def concpathbuilder(root, concentration, flowrate, framerate):
-    return pathbuilder(root, ["preprocessed", concentration, flowrate, framerate])
+def concpathbuilder(root, substance, concentration, flowrate):
+    return pathbuilder(root,
+                       ["preprocessed",
+                        substance,
+                        concentration,
+                        flowrate])
 
 
-def fullpathbuilder(root, concentration, framerate):
-    return pathbuilder(root, ["preprocessed", concentration, "Full", framerate])
+def fullpathbuilder(root, substance, concentration):
+    return pathbuilder(root, ["preprocessed", substance, concentration, "0lmin"])
 
 
-def emptypathbuilder(root, framerate):
+def emptypathbuilder(root):
     # return pathbuilder(root, ["preprocessed", "Empty", framerate])
-    return pathbuilder(root, ["preprocessed", "single-source", "Empty", framerate])
+    return pathbuilder(root, ["preprocessed", "Empty"])
 
 
 def extensionless_filename(
@@ -121,4 +125,3 @@ def hdf5_filename(
         mask_size) + ".hdf5"
 
     return filename
-
