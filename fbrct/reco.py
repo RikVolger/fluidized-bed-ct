@@ -123,9 +123,11 @@ class Reconstruction:
         @memory.cache decorator. If you need to recompute, delete files
         in ../cache/joblib/fbrct/reco."""
 
+        # Load 'full' image
         ref = load(ref_path, ref_projs, **load_kwargs)
         if dark is not None:
             _apply_darkfields(dark, ref)
+        # TODO Load / calculate 'full' scatter and use here.
         _scatter_correct(ref,
                          scatter_mean_full if ref_full else scatter_mean_empty)
 
@@ -145,6 +147,7 @@ class Reconstruction:
                 empty = load(empty_path, empty_projs, **load_kwargs)
                 if dark is not None:
                     _apply_darkfields(dark, empty)
+                # TODO Load / calculate 'empty' scatter and use here
                 _scatter_correct(empty, scatter_mean_empty)
 
                 if not empty_rotational:

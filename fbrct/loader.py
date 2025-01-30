@@ -212,6 +212,7 @@ def _apply_darkfields(dark, meas):
 
 
 def _scatter_correct(meas, scatter_mean: float = 0.0):
+    # TODO update to deal with ndarray scatter
     if scatter_mean != 0.0:
         meas -= scatter_mean
         np.clip(meas, 0.0, None, out=meas)
