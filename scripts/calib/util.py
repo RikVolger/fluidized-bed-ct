@@ -158,19 +158,13 @@ def annotated_data(
             points = DelftNeedleEntityLocations(
                 f"{resource_path}/{fname}_cam{cam}.npy",
                 t)
-            print(f'resource_path: {resource_path}')
-            print(f'projs_path = {projs_path}')
-            ################################################# HERE STILL 577
             if open_annotator:
-                
                 projs = _load_projs(projs_path, t_range=range(t, t + 1),
                                     camera=cam)
                 projs = np.squeeze(projs)
                 Annotator(points, projs, block=True, vmin=vmin, vmax=vmax)
-            
+
             l = points.locations()
-            
-            print(f'l= {l}')
             data[cam].append(l)
 
     return data
@@ -268,7 +262,6 @@ def astra_reco(reco: Reconstruction,
 def astra_project(reco, vol_id, vol_geom, geoms):
     vectors = np.array([geom2astravec(g, reco.detector) for g in geoms])
     # zero-sinogram
-
     sino_id, proj_geom = reco.sino_gpu_and_proj_geom(0.0, vectors)
     proj_id = reco.forward(
         volume_id=vol_id,
@@ -314,8 +307,8 @@ def prep_projs(projs):
     return np.ascontiguousarray(projs)
 
 
-def marker_optimization(
-    geoms, data, nr_iters: int = 1, max_nfev=10, plot=False, **kwargs):
+def marker_optimization(geoms, data, nr_iters: int = 1, max_nfev=10, 
+                        plot=False, **kwargs):
     from cate.param import params2ndarray
     from scipy.optimize import least_squares
 

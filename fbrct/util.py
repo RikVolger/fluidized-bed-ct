@@ -114,7 +114,6 @@ def plot_nicely(
         (im.shape[1] // 2) - 0.5,
     )
     im = np.flipud(np.swapaxes(im, 0, 1))
-    print(im.shape)
     ax.imshow(
         im,
         vmin=vmin,
