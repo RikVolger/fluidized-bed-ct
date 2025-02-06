@@ -1,0 +1,102 @@
+# Detector specs (shouldn't change)
+detector_cols_spec: 1548      # also those outside ROI
+detector_rows_spec: 1524      # also those outside ROI
+detector_width_spec: 30.7     # cm, also outside ROI
+detector_height_spec: 30.2    # cm, also outside ROI
+detector_pixel_spec: 0.0198   # cm
+# Setup properties (Measurements & Settings)
+# Expected to be the same for all measurements. If you change these half-way, 
+# you'll have to make a new yaml for the second part. If you want to change them
+# throughout your experiments, you'll have to rework the codebase a bit.
+source_radius: 88.5 
+detector_radius: 32.1
+detector_cols: 1548           # including ROI
+detector_rows: 1524           # including ROI
+column_inner_diameter: 19.2   # cm
+column_outer_diameter: 20.0   # cm
+calibration_file: D:\XRay\1999-01-01 Evert\preprocessed_Rotation_needles_5degps\calibration\geom_preprocessed_Rotation_needles_5degps_again_calibrated_on_1jan1999.npy
+frames:
+- measurement:
+  - start: 10
+    stop: 2600
+- full:
+  - start: 10
+    stop: 200
+- empty:
+  - start: 10
+    stop: 200
+# Reconstruction settings
+number_of_iterations: 200
+investigate_loss: False
+beam_hardening_correction: False
+recon_volumes:  # in cm
+- side: 21
+  height: 15
+voxel_sizes:
+- 0.03
+mask_sizes:
+- 20
+initialize: flat  # 'flat', 'ones' or 'parabolic'
+# Measurements to reconstruct
+#############
+# If the same 'empty', 'dark', or 'full' can be used for all reconstructions:
+# Provide absolute paths here. These will be referred to in the next comments as
+# 'global paths'. They are overwritten if an experiment also has a day-path or
+# experiment-specific 'empty', 'dark' or 'full' measurement
+# empty: D:\XRay\1999-01-01 Evert\preprocessed_Empty
+# dark: D:\Xray\1999-01-01 Evert\preprocessed_Dark
+# full: D:\Xray\1999-01-01 Evert\preprocessed_Full
+# Per folder with measurements, which measurements to reconstruct
+measurements:
+# Example with single empty, full and dark measurements for all experiments
+- day: 01-01-1999
+  root: D:\XRay\1999-01-01 Evert
+  # If the same 'empty', 'dark', or 'full' can be used for all reconstructions 
+  # on this day: Provide relative paths here (day-paths). They will overwrite 
+  # the global paths
+  empty: preprocessed_Empty
+  dark: preprocessed_Dark
+  full: preprocessed_Full
+  reconstructions:
+  - measured: preprocessed_single-bubble
+  - measured: preprocessed_double-bubble
+  - measured: preprocessed_triple-bubble
+# Example of a folder with day-paths for 'empty' and 'dark', but separate
+# full measurements for each experiment
+- day: 02-01-1999
+  root: D:\XRay\1999-01-02 Evert
+  empty: preprocessed_Empty
+  dark: preprocessed_Dark
+  reconstructions:
+  - measured: preprocessed_Propanol_10gl_80lmin
+    # 'full', 'empty' or 'dark' path here overrules the day- and global paths
+    full: preprocessed_Propanol_10gl_0lmin
+  - measured: preprocessed_Propanol_15gl_80lmin
+    full: preprocessed_Propanol_15gl_0lmin
+  - measured: preprocessed_Ethanol_15gl_80lmin
+    full: preprocessed_Ethanol_15gl_0lmin
+# Example of a folder relying on global empty and dark measurements, but with 
+# unique full measurement for each experiment
+- day: 03-01-1999
+  root: D:\XRay\1999-01-03 Evert
+  reconstructions:
+  - measured: preprocessed_Butanol_10gl_80lmin
+    full: preprocessed_Butanol_10gl_0lmin
+  - measured: preprocessed_Butanol_15gl_80lmin
+    full: preprocessed_Butanol_15gl_0lmin
+  - measured: preprocessed_IsoPropanol_15gl_80lmin
+    full: preprocessed_IsoPropanol_15gl_0lmin
+# Example of a folder relying fully on global reference measurements
+- day: 04-01-1999
+  root: D:\XRay\1999-01-04 Evert
+  reconstructions:
+  - measured: preprocessed_Water_10lmin
+  - measured: preprocessed_Water_20lmin
+  - measured: preprocessed_Water_30lmin
+  - measured: preprocessed_Water_40lmin
+  - measured: preprocessed_Water_50lmin
+  - measured: preprocessed_Water_60lmin
+  - measured: preprocessed_Water_70lmin
+  - measured: preprocessed_Water_80lmin
+  - measured: preprocessed_Water_90lmin
+  - measured: preprocessed_Water_100lmin
