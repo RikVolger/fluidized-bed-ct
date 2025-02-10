@@ -19,16 +19,16 @@ calibration_file: "D:\\XRay\\2024-11-14 Rik en Sam\
   \\geom_preprocessed_Rotation_needles_5degps_again_calibrated_on_14janc2025.npy"
 frames:
   measurements:
-    start: 10
+    start: 50
     stop: 2600
   full:
-    start: 10
+    start: 50
     stop: 200
   empty:
-    start: 10
+    start: 50
     stop: 200
   dark:
-    start: 10
+    start: 50
     stop: 200
 # Reconstruction settings
 number_of_iterations: 200
@@ -53,23 +53,44 @@ dark: D:\XRay\2024-11-25 Rik en Sam\preprocessed_dark
 # full: D:\Xray\1999-01-01 Evert\preprocessed_Full
 # Per folder with measurements, which measurements to reconstruct
 measurements:
-- day: 21-11-2024
-  root: D:\XRay\2024-11-21 Rik en Sam
-  empty: preprocessed_empty
+- day: 27-11-2024
+  root: D:\XRay\2024-11-27 Rik en Sam
+  empty: BHC2_empty
   reconstructions:
-  - measured: preprocessed_PrOH_00gl_80lmin
-    full: preprocessed_PrOH_00gl_0lmin
-  - measured: preprocessed_PrOH_03gl_80lmin
-    full: preprocessed_PrOH_03gl_0lmin
-  - measured: preprocessed_PrOH_06gl_80lmin
-    full: preprocessed_PrOH_06gl_0lmin
-  - measured: preprocessed_PrOH_09gl_80lmin
-    full: preprocessed_PrOH_09gl_0lmin
-  - measured: preprocessed_PrOH_12gl_80lmin
-    full: preprocessed_PrOH_12gl_0lmin
-  - measured: preprocessed_PrOH_15gl_80lmin
-    full: preprocessed_PrOH_15gl_0lmin
-  - measured: preprocessed_PrOH_19gl_80lmin
-    full: preprocessed_PrOH_19gl_0lmin
-  - measured: preprocessed_PrOH_22gl_80lmin
-    full: preprocessed_PrOH_22gl_0lmin
+  - measured: BHC2_IPA_00gl_80lmin
+    full: BHC2_IPA_00gl_0lmin
+#   - measured: preprocessed_PrOH_03gl_80lmin
+#     full: preprocessed_PrOH_03gl_0lmin
+#   - measured: preprocessed_PrOH_06gl_80lmin
+#     full: preprocessed_PrOH_06gl_0lmin
+#   - measured: preprocessed_PrOH_09gl_80lmin
+#     full: preprocessed_PrOH_09gl_0lmin
+#   - measured: preprocessed_PrOH_12gl_80lmin
+#     full: preprocessed_PrOH_12gl_0lmin
+#   - measured: preprocessed_PrOH_15gl_80lmin
+#     full: preprocessed_PrOH_15gl_0lmin
+#   - measured: preprocessed_PrOH_19gl_80lmin
+#     full: preprocessed_PrOH_19gl_0lmin
+#   - measured: preprocessed_PrOH_22gl_80lmin
+#     full: preprocessed_PrOH_22gl_0lmin
+
+# - day: 21-11-2024
+#   root: D:\XRay\2024-11-21 Rik en Sam
+#   empty: preprocessed_empty
+#   reconstructions:
+#   - measured: preprocessed_PrOH_00gl_80lmin
+#     full: preprocessed_PrOH_00gl_0lmin
+#   - measured: preprocessed_PrOH_03gl_80lmin
+#     full: preprocessed_PrOH_03gl_0lmin
+#   - measured: preprocessed_PrOH_06gl_80lmin
+#     full: preprocessed_PrOH_06gl_0lmin
+#   - measured: preprocessed_PrOH_09gl_80lmin
+#     full: preprocessed_PrOH_09gl_0lmin
+#   - measured: preprocessed_PrOH_12gl_80lmin
+#     full: preprocessed_PrOH_12gl_0lmin
+#   - measured: preprocessed_PrOH_15gl_80lmin
+#     full: preprocessed_PrOH_15gl_0lmin
+#   - measured: preprocessed_PrOH_19gl_80lmin
+#     full: preprocessed_PrOH_19gl_0lmin
+#   - measured: preprocessed_PrOH_22gl_80lmin
+#     full: preprocessed_PrOH_22gl_0lmin
