@@ -318,9 +318,23 @@ class AstraReconstruction(Reconstruction):
         iters=200,
         min_constraint=0.0,
         max_constraint=None,
-        **kwargs,
+        investigating_loss: bool = False,   # flag to log loss progression during iterations
+        initialization: str = "flat",
+        r=None,
     ):
-        vol_id, vol_geom = self.empty_volume_gpu(voxels, voxel_size)
+        if initialization == "parabolic":
+            init = column_mask(
+                voxels,
+                r,
+                val=lambda x, y: max(1 - (x/r)**2 - (y/r)**2, 0)
+            )
+            init = np.transpose(init, [2, 1, 0])
+            # create column mask, where value is not 1, but dependent on a - b * y**2 - c * x**2
+        elif initialization == "ones":
+            init = 1.0
+        else:
+            init = None
+        vol_id, vol_geom = self.volume_gpu(voxels, voxel_size, init)
 
         print("Algorithm starts...")
         algo = algo.lower()
