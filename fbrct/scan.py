@@ -170,7 +170,9 @@ class Scan(ABC):
         darks=None,
         empty=None,
         is_rotational: bool = False,
-        cams_are_rotated: bool = False,
+        # TODO 'Rotated' is ambiguous. Perhaps change to 'cropping dimension' with
+        # value 'height' or 'width'
+        cams_are_rotated: bool = False,     
         is_full: bool = False,
         col_inner_diameter: float = None,
         density_factor: float = None

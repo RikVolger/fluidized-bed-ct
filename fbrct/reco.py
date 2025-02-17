@@ -18,6 +18,7 @@ memory = Memory(cachedir, verbose=0)
 
 def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
     import astra
+    import astra.experimental
 
     proj_cfg = {
         "type": "cuda3d",
@@ -117,7 +118,9 @@ class Reconstruction:
                                 scatter_mean_full,
                                 scatter_mean_empty):
         """This function avoids loading the entire stack of files when
-        the reference is already computed and stored."""
+        the reference is already computed and stored by using the
+        @memory.cache decorator. If you need to recompute, delete files
+        in ../cache/joblib/fbrct/reco."""
 
         ref = load(ref_path, ref_projs, **load_kwargs)
         if dark is not None:
@@ -274,6 +277,8 @@ class AstraReconstruction(Reconstruction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    # TODO explain added value of having empty_volume_gpu. It's a wrapper using 
+    # default behaviour of volume_gpu. Why not just call that?
     def empty_volume_gpu(self, voxels: tuple, voxel_size):
         return self.volume_gpu(voxels, voxel_size)
 
@@ -365,6 +370,7 @@ class AstraReconstruction(Reconstruction):
 
     @staticmethod
     def forward(volume_id, volume_geom, projection_geom, returnData=False):
+        import astra
         return astra.creators.create_sino3d_gpu(
             volume_id, projection_geom, volume_geom, returnData=returnData
         )

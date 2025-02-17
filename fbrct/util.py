@@ -23,6 +23,7 @@ def plot_projs(
         row_end = projs.shape[1]
 
     if subplot_row:
+        # TODO Add some documentation. very hard to figure out what this piece is doing.
         subplt_shape = (
             (1, len(projs),) if projs.shape[1] > projs.shape[2]
             else (len(projs), 1)
@@ -113,7 +114,6 @@ def plot_nicely(
         (im.shape[1] // 2) - 0.5,
     )
     im = np.flipud(np.swapaxes(im, 0, 1))
-    print(im.shape)
     ax.imshow(
         im,
         vmin=vmin,
