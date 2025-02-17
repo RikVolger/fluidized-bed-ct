@@ -353,20 +353,36 @@ class AstraReconstruction(Reconstruction):
             col_mask = column_mask(voxels, r)
             col_mask = np.transpose(col_mask, [2, 1, 0])
             mask_id, _ = self.volume_gpu(voxels, voxel_size, col_mask)
-            _astra_sirt_algo(
-                vol_id,
-                proj_id,
-                iters,
-                mask_id,
-                min_constraint=min_constraint,
-                max_constraint=max_constraint,
-            )
+            if investigating_loss:
+                # run _astra_sirt_algo for one iter at a time, recording loss
+                loss = np.zeros(iters)
+                algo_id = None
+                for i in range(iters):
+                    loss[i], algo_id = _astra_sirt_algo(
+                        vol_id,
+                        proj_id,
+                        1,
+                        mask_id,
+                        min_constraint=min_constraint,
+                        max_constraint=max_constraint,
+                        algo_id=algo_id
+                    )
+            else:
+                loss, _ = _astra_sirt_algo(
+                    vol_id,
+                    proj_id,
+                    iters,
+                    mask_id,
+                    min_constraint=min_constraint,
+                    max_constraint=max_constraint,
+                )
         elif algo == "fdk":
             _astra_fdk_algo(vol_geom, proj_geom, vol_id, proj_id)
+            loss = None
         else:
             raise ValueError("Algorithm value incorrect.")
 
-        return vol_id, vol_geom
+        return vol_id, vol_geom, loss
 
     @staticmethod
     def forward(volume_id, volume_geom, projection_geom, returnData=False):
