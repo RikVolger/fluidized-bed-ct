@@ -130,7 +130,8 @@ class Reconstruction:
         #     assert len(ref) == len(t_range)
 
         if density_factor is None:
-            density_factor = 1.0
+            # density_factor = 1.0
+            density_factor = np.ones_like(ref)
             if empty_path is not None:
                 assert col_inner_diameter is not None, (
                     "Column diameter needs to be known to compute empty"
@@ -220,8 +221,10 @@ class Reconstruction:
                 scatter_mean_full,
                 scatter_mean_empty)
 
-        if density_factor is None:
+        if density_factor is None and ref is None:
             density_factor = 1.0
+        elif density_factor is None:
+            density_factor = np.ones_like(ref)
 
         meas = load(self._path, t_range, t_offsets, **load_kwargs)
         if dark is not None:
@@ -229,7 +232,7 @@ class Reconstruction:
         _scatter_correct(meas, scatter_mean_full)
         meas = preprocess(meas, ref,
                           ref_full=ref_full,
-                          scaling_factor=1 / density_factor)
+                          density_factor=density_factor)
         return np.ascontiguousarray(meas.astype(np.float32))
 
     @staticmethod
@@ -340,7 +343,7 @@ class AstraReconstruction(Reconstruction):
         algo = algo.lower()
         if algo == "sirt":
             from fbrct import column_mask
-            col_mask = column_mask(voxels)
+            col_mask = column_mask(voxels, r)
             col_mask = np.transpose(col_mask, [2, 1, 0])
             mask_id, _ = self.volume_gpu(voxels, voxel_size, col_mask)
             _astra_sirt_algo(
