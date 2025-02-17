@@ -33,19 +33,21 @@ def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
 def _astra_sirt_algo(
     volume_id, sinogram_id, iters, mask_id,
     min_constraint=0.0, max_constraint=None,
+    algo_id=None
 ):
     import astra
+    if algo_id is None:
+        cfg = astra.astra_dict(
+            "SIRT3D_CUDA")  # 'FDK_CUDA', 'SIRT3D_CUDA', 'CGLS3D_CUDA',
+        cfg["ReconstructionDataId"] = volume_id
+        cfg["ProjectionDataId"] = sinogram_id
+        cfg["option"] = {"MinConstraint": min_constraint,
+                         "MaxConstraint": max_constraint,
+                         "ReconstructionMaskId": mask_id}
 
-    cfg = astra.astra_dict(
-        "SIRT3D_CUDA")  # 'FDK_CUDA', 'SIRT3D_CUDA', 'CGLS3D_CUDA',
-    cfg["ReconstructionDataId"] = volume_id
-    cfg["ProjectionDataId"] = sinogram_id
-    cfg["option"] = {"MinConstraint": min_constraint,
-                     "MaxConstraint": max_constraint,
-                     "ReconstructionMaskId": mask_id}
-
-    algo_id = astra.algorithm.create(cfg)
+        algo_id = astra.algorithm.create(cfg)
     astra.algorithm.run(algo_id, iters)  # nr iters
+    return astra.algorithm.get_res_norm(algo_id), algo_id
 
 
 class Reconstruction:
