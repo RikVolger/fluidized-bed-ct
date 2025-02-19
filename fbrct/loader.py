@@ -11,7 +11,7 @@ from tifffile import tifffile
 import imageio
 from tqdm import tqdm
 
-PROJECTION_FILE_REGEX = "camera ([1-3])/img_([0-9]{1,6})\.tif$"
+PROJECTION_FILE_REGEX = "camera ([1-3])\\\img_([0-9]{1,6})\.tif$"
 
 # we use joblibs `Memory` to cache long results
 path = pathlib.Path(__file__).parent.resolve()
@@ -28,12 +28,16 @@ def _collect_fnames(
 
     results, results_filenames = [], []
     regex = re.compile(regex)
+    # print(f"Zoeken in pad: {path}" )  ######## debug
     print(path)
     for root, dirs, files in os.walk(path):
+        # print(f"in map {root}:")  ####### debug
+        # print(f"Gevonden bestanden: {files}")    ##### debug
         for file in files:
             full_filename = os.path.join(root, file)
             match = regex.search(full_filename)
             if match is not None:
+                # print(f"Match gevonden: {full_filename}")   #### debug
                 groups = match.groups()
 
                 tmp_result = [None] * len(groups)
@@ -47,8 +51,11 @@ def _collect_fnames(
 
                 results.append(tmp_result)
                 results_filenames.append(full_filename)
+            # else:
+                # print(f"Geen match:{full_filename}")   ##### debug
 
     return results, results_filenames
+
 
 
 def load(
@@ -66,6 +73,11 @@ def load(
     results, results_filenames = _collect_fnames(path, regex)
     # Check the results for continuity in the subsequences range
     lists = list(zip(*results))
+
+##############################################################################################################################
+
+
+##############################################################################################################################
 
     first_cam = cameras[0]
     amount_matches = lists[0].count(first_cam)

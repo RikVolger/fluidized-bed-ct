@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pyqtgraph as pq
 
 import cate.astra as cate_astra
-from cate.util import plot_projected_markers
+from cate.util import plot_projected_markers, geoms_from_interpolation
 from fbrct.reco import AstraReconstruction
 from scripts.calib.util import *
 from scripts.settings import *
@@ -11,19 +11,19 @@ detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
                                DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT)
 
 # directory of the calibration scan
-DATA_DIR_CALIB = "/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
-MAIN_DIR_CALIB = "pre_proc_VROI500_1000_Cal_20degsec"
+DATA_DIR_CALIB = r"U:\Xray RPT ChemE\X-ray\Xray_data\2024-05-16 Lisanne\VROI190_1320"
+MAIN_DIR_CALIB = "pre_proc_VROI190_1320_needles_10degsec"
 
 # directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = "/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
-MAIN_DIR = "pre_proc_VROI500_1000_Cal_20degsec"
+DATA_DIR = r"U:\Xray RPT ChemE\X-ray\Xray_data\2024-05-16 Lisanne\VROI190_1320"
+MAIN_DIR = "pre_proc_VROI190_1320_needles_10degsec"
 PROJS_PATH = f'{DATA_DIR}/{MAIN_DIR}'
 
 # configure which projection range to take
-if MAIN_DIR == "pre_proc_3x10mm_foamballs_vertical_01":
+if MAIN_DIR == "pre_proc_VROI190_1320_needles_10degsec":
     proj_start = 37
-    proj_end = 1621
-    ref_path = '/home/adriaan/ownCloud3/pre_proc_Full_30degsec_03'
+    proj_end = 1440
+    #ref_path = '/home/adriaan/ownCloud3/pre_proc_Full_30degsec_03'
     nr_projs = proj_end - proj_start
 elif MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
     proj_start = 39
@@ -36,14 +36,20 @@ else:
     raise Exception()
 
 # postfix of stored claibration
-POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_13june2023'
+POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_2march2025'
 
-t = [497, 958, 1223]
-t_annotated = [497, 958, 1223]
+t = [50, 433, 816]
+t_annotated = [50, 433, 816]
+
+#t = [497, 958, 1223]
+#t_annotated = [497, 958, 1223]
 
 # restore calibration
 multicam_geom = np.load(f'multicam_geom_{POSTFIX}.npy', allow_pickle=True)
+#multicam_geom = np.load(f'geom_{POSTFIX}.npy', allow_pickle=True)
 markers = np.load(f'markers_{POSTFIX}.npy', allow_pickle=True).item()
+
+
 
 multicam_data = annotated_data(
     PROJS_PATH,
@@ -66,13 +72,14 @@ reco = AstraReconstruction(PROJS_PATH, detector_cropped.todict())
 
 all_geoms = []
 all_projs = []
-for cam_id in range(1, 2):
-    # geoms_interp = geoms_from_interpolation(
-    #     interpolation_geoms=multicam_geom[cam_id - 1],
-    #     interpolation_nrs=t,
-    #     interpolation_calibration_nrs=t_annotated,
-    #     plot=False)
-    all_geoms.extend(multicam_geom[cam_id - 1])
+for cam_id in range(1, 4):
+    geoms_interp = geoms_from_interpolation(
+        interpolation_geoms=multicam_geom[cam_id - 1],
+        #interpolation_geoms=[multicam_geom[0][cam_id]],
+        interpolation_nrs=t,
+        interpolation_calibration_nrs=t_annotated,
+        plot=False)
+    all_geoms.extend(geoms_interp)
     projs = reco.load_sinogram(t_range=t, cameras=[cam_id],
                                ref_full=True)
     projs = prep_projs(projs)

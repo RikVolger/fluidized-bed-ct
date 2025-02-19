@@ -4,17 +4,27 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pyqtgraph as pq
+from scipy.io import savemat
 
 from fbrct import loader, reco, Scan, DynamicScan, StaticScan, FluidizedBedScan
 from fbrct.reco import AstraReconstruction
 from fbrct.util import plot_projs
 from fbrct import column_mask
 
+from pathlib import Path
+import h5py
+import os
+import pyvista as pv
+
+
+
+
 """1. Configuration of set-up and calibration"""
-DETECTOR_COLS = 500  # including ROI
-DETECTOR_ROWS = 1548  # including ROI
+
+DETECTOR_COLS = 1548  # including ROI was bij sophia 500
+DETECTOR_ROWS = 1130  # including ROI was 1548
 DETECTOR_COLS_SPEC = 1524  # also those outside ROI
-DETECTOR_WIDTH_SPEC = 30.2  # cm, also outside ROI
+DETECTOR_WIDTH_SPEC = 30.2  # cm, also outside ROI veranderen 0.198 mm
 DETECTOR_HEIGHT = 30.7  # cm, also outside ROI
 DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS  # cm
 DETECTOR_PIXEL_WIDTH = DETECTOR_WIDTH / DETECTOR_COLS
@@ -26,12 +36,13 @@ DETECTOR = {
     "pixel_height": DETECTOR_PIXEL_HEIGHT,
 }
 DATA_DIR = Path(
-    "/run/media/adriaan/Elements/academic/data/ownCloud_Sophia_SBI/VROI500_1000")
+   r"U:\Xray RPT ChemE\X-ray\Xray_data\2024-05-16 Lisanne\VROI190_1320")
 CALIBRATION_FILE = str(Path(__file__).parent
                        / "calib"
-                       / "geom_pre_proc_VROI500_1000_Cal_20degsec_calibrated_on_06june2023.npy")
+                       / "geom_pre_proc_VROI190_1320_needles_10degsec_calibrated_on_2march2025.npy")
 
-# / "geom_table474mm_26aug2021_amend_pre_proc_3x10mm_foamballs_vertical_wall_31aug2021.npy")
+ #/ "geom_table474mm_26aug2021_amend_pre_proc_3x10mm_foamballs_vertical_wall_31aug2021.npy")
+#CALIBRATION_FILE = str(DATA_DIR / "pre_proc_VROI500_1000_Cal_20degsec")
 
 
 """2. Configuration of pre-experiment scans. Use `StaticScan` for scans where
@@ -51,7 +62,7 @@ some starting frames are jittered and must be skipped.
 full = StaticScan(  # example: a full scan that is not rotating
     "full",  # give the scan a name
     DETECTOR,
-    str(DATA_DIR / "pre_proc_5cm_VROI500_1000_Full_01"),
+    str(DATA_DIR / "pre_proc_VROI190_1320_Full_10degsec"),
     proj_start=10,  # TODO
     proj_end=110,  # TODO: set higher for less noise
     is_full=True,
@@ -63,7 +74,7 @@ full = StaticScan(  # example: a full scan that is not rotating
 empty = StaticScan(
     "empty",
     DETECTOR,
-    str(DATA_DIR / "pre_proc_5cm_VROI500_1000_Empty"),
+    str(DATA_DIR / "pre_proc_VROI190_1320_Empty_10degsec"),
     proj_start=10,  # TODO
     proj_end=20,  # TODO: set higher to reduce noise levels
     is_full=False,
@@ -78,17 +89,19 @@ empty = StaticScan(
    reconstruction.
 """
 scan = FluidizedBedScan(
-    "MF4",
+    "MF24",
     DETECTOR,
-    str(DATA_DIR / "pre_proc_5cm_P18_VROI500_1000_MF4_VO50"),
+    str(DATA_DIR / "pre_proc_VROI190_1320_4cm_nozzlegap_MF24_VO1_50_VO2_50"),
     liter_per_min=None,  # liter per minute (set None to ignore)
-    projs=range(1000, 2000),  # TODO: set this to a valid range
+    projs=range(50, 1000),  # TODO: set this to a valid range
     projs_offset={1: 0, 2: 1, 3: 1},
     geometry=CALIBRATION_FILE,
     cameras=(1, 2, 3),
     col_inner_diameter=5.0,
 )
-timeframes = [1630, 1446]  # which images to reconstruct
+timeframes = [81]
+#timeframes = list(range(80,91))
+#timeframes = list(range(1397, 1447))  # which images to reconstruct
 # timeframes = [1658, 1650, 1630, 1446]  # which images to reconstruct
 
 """4. Select a background reference.
@@ -124,11 +137,39 @@ else:
     ref_rotational = False
 
 """5. Preprocess the sinogram."""
+
+#------------------------------------------------------------------------------------------------------------------------
+#Code om fout te debuggen kijken naar projecties die beschikbaar zijn in mappen
+print("Beschikbare projectienummers:", loader.projection_numbers(scan.projs_dir))
+
+print("Tijdframes", timeframes)
+
+#Controleren of elke tijdframe in timeframes overeenkomt met een projectienummer
+for t in timeframes:
+    if t not in loader.projection_numbers(scan.projs_dir):
+        print(f"Tijdframe {t} niet gevonden in beschikbare projectienummers.")
+
+#Debug regels om inhoud van de map en de paden te controleren
+print("Bestanden in map:", list(Path(scan.projs_dir).glob("*")))
+print("Projectiemap pad:", scan.projs_dir)
+###########################################################################################################################
 assert np.all(
     [t in loader.projection_numbers(scan.projs_dir) for t in timeframes])
 recon = reco.AstraReconstruction(
     scan.projs_dir,
     detector=scan.detector)
+
+# Bekijk alle beschikbare attributen en methoden
+print(dir(empty))  
+
+# Of, nog specifieker, alle niet-onderstreepte (publieke) attributen:
+print([attr for attr in dir(empty) if not attr.startswith('_')])
+
+
+
+
+
+##############################################################################################################################
 # recon = reco.KernelKitReconstruction(
 #     scan.projs_dir,
 #     detector=scan.detector)
@@ -153,28 +194,83 @@ sino = recon.load_sinogram(
 )
 
 """6. Perform a SIRT reconstruction (ASTRA Toolbox)"""
-for sino_t in sino:  # go through timeframes one by one
-    sino_t = np.fliplr(np.transpose(sino_t, [0, 2, 1]))
+# for sino_t in sino:  # go through timeframes one by one
+#     sino_t = np.fliplr(np.transpose(sino_t, [0, 2, 1]))
+#     plot_projs(sino_t, subplot_row=True)
+#     #plt.show()
+
+#     proj_id, proj_geom = recon.sino_gpu_and_proj_geom(sino_t, scan.geometry())
+#     vol_id, vol_geom = recon.backward(
+#         proj_id,
+#         proj_geom,
+#         algo='sirt',
+#         voxels=(200, 200, 800),  # (300, 300, 1500) for better resolution
+#         voxel_size=5.5 / 200,  # 5.5 cm / 200 voxels
+#         iters=200,
+#         min_constraint=0.0,
+#         max_constraint=1.0,
+#         col_mask=True)
+#     x = recon.volume(vol_id)
+#     recon.clear()
+
+# Bepaal de map waar alle reconstructies worden opgeslagen
+output_dir = Path(DATA_DIR) / "reconstructions"
+output_dir.mkdir(parents=True, exist_ok=True)  # Maak de map als die niet bestaat
+
+# Ga per tijdframe door de reconstructie-loop
+for i, (sino_t, t) in enumerate(zip(sino, timeframes)):  
+    sino_t = np.fliplr(np.transpose(sino_t, [0, 2, 1]))  # Laad sinogram
     plot_projs(sino_t, subplot_row=True)
-    plt.show()
+   # plt.show()
 
     proj_id, proj_geom = recon.sino_gpu_and_proj_geom(sino_t, scan.geometry())
     vol_id, vol_geom = recon.backward(
-        proj_id,
-        proj_geom,
+        proj_id, proj_geom,
         algo='sirt',
-        voxels=(200, 200, 800),  # (300, 300, 1500) for better resolution
-        voxel_size=5.5 / 200,  # 5.5 cm / 200 voxels
-        iters=200,
+        voxels=(200, 200, 800),
+        voxel_size=5.5 / 200,
+        iters=50,
         min_constraint=0.0,
         max_constraint=1.0,
-        col_mask=True)
-    x = recon.volume(vol_id)
+        col_mask=True
+    )
+    
+    x = recon.volume(vol_id)  # Opslaan per tijdframe
     recon.clear()
+    
 
-    pq.image(x.T)
+
+    # **VTK-bestand maken**
+    vtk_output_path = output_dir / f"recon_{t}.vtk"
+
+    # PyVista grid maken (structured grid voor volume data)
+    grid = pv.ImageData()
+    grid.dimensions = x.shape  # Zet de dimensies van het volume
+    grid.spacing = (0.02, 0.02, 0.02)  # Voxelgrootte (pas aan indien nodig)
+    
+    # Voeg de reconstructie data toe als een veld
+    grid.point_data["Density"] = x.flatten(order="F")  # Flatten voor VTK-indeling
+
+    # VTK-bestand opslaan
+    grid.save(str(vtk_output_path))
+
+    print(f"✅ VTK-bestand voor tijdframe {t} opgeslagen als: {vtk_output_path}")
+
+
+    # #pq.image(x.T)
+    # #plt.imshow(x.T)
+    # plt.figure()
+    # plt.show()
+    voxel_size = 0.02
+    recon_box_side = int(np.ceil(30 / voxel_size))
+    recon_box_height = int(np.ceil(recon_box_side/2))
+    # pq.image(x.T)
     plt.figure()
-    plt.show()
+    plt.imshow(x[:, :, int(recon_box_height / 2)])
+    plt.colorbar()
+    #plt.show()
+
+    
 
 # """6. Perform a SIRT reconstruction (experimental - ASTRA KernelKit)"""
 # import cupy as cp
