@@ -189,20 +189,6 @@ COLUMN_OD = scans['column_outer_diameter']
 RECON_VOLUMES = scans['recon_volumes']
 VOXEL_SIZES = scans['voxel_sizes']
 MASK_SIZES = scans['mask_sizes']
-CORRECT_BEAM_HARDENING = scans['beam_hardening_correction']
-if CORRECT_BEAM_HARDENING:
-    assert 'BHC' in scans.keys()
-    BHC = {
-        'a': scans['BHC']['a'],
-        'b': scans['BHC']['b'],
-        'c': scans['BHC']['c']
-    }
-else:
-    BHC = {
-        'a': 1.0,
-        'b': 1.0,
-        'c': 2.0
-    }
 INITIALIZATION = scans['initialize']
 
 """2. Configuration of pre-experiment scans. Use `StaticScan` for scans where

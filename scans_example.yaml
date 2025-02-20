@@ -28,7 +28,6 @@ frames:
 # Reconstruction settings
 number_of_iterations: 200
 investigate_loss: False
-beam_hardening_correction: False
 recon_volumes:  # in cm
 - side: 21
   height: 15
