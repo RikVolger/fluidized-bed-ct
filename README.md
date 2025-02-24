@@ -10,12 +10,42 @@ scripts allow
 ## 1. Installation
 If you don't have _conda_ installed, find some installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Do **not** use the TU Delft Software Center version of anaconda.
 
+### 1.1. Rapid install
+The fastest way of installing is to clone this repository and create a `conda` environment
+from the `requirements.txt` file in there. A working conda environment has been
+exported into this file, so functionality is guaranteed (for Windows).
 
+In the terminal, navigate to a folder where you want to keep the code (preferable local,
+on the `C:` drive \[for Windows\]). There, download this repository:
+```shell
+git clone https://github.com/RikVolger/fluidized-bed-ct.git
+```
+You can then install the environment specified in requirements.txt as a new environment:
+```shell
+cd path/to/fluidized-bed-ct
+conda create --name fluidized_bed_ct --file requirements.txt
+conda activate fluidized_bed_ct
+conda develop .
+```
+
+Now, install the _CaTE_ package:
+```shell
+cd path/to/fluidized-bed-ct
+cd ../
+git clone https://github.com/adriaangraas/cate
+cd cate
+conda activate fluidized_bed_ct
+conda develop .
+```
+
+### 1.2. Less rapid install
+Below the 'legacy' instructions for installation. It will potentially use newer
+versions of packages, which might or might not work.
 For an installation with _conda_ (or _mamba_, preferred), open a terminal window and run:
 ```shell
 conda create -n fluidized_bed_ct python=3.10
 conda activate fluidized_bed_ct
-conda install numpy scipy imageio matplotlib joblib tqdm pyqtgraph conda-build -c conda-forge
+conda install numpy scipy imageio matplotlib joblib tqdm pyqtgraph conda-build transforms3d tifffile -c conda-forge
 conda install astra-toolbox -c astra-toolbox/label/dev
 ```
 
@@ -32,9 +62,11 @@ conda activate fluidized_bed_ct
 conda develop .
 ```
 
-The calibration relies on the _CaTE_ scripts. Install these in the same folder:
+The calibration relies on the _CaTE_ scripts. Install these next to `fluidized-bed-ct`:
 
 ```shell
+cd path/to/fluidized-bed-ct
+cd ../
 git clone https://github.com/adriaangraas/cate
 ```
 
