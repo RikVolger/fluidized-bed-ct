@@ -171,11 +171,19 @@ def annotated_data(
 
 
 def triangle_geom(
-    src_rad, det_rad, rotation=False, shift=False, fix_first_det=True,
+        src_rad,
+        det_rad,
+        rotation=False,
+        shift=False,
+        fix_first_det=True,
+        mirrored=False
 ):
     geoms = []
-    # TODO make below dependent on mirroring state
-    for i, src_a in enumerate([0, -2 / 3 * np.pi, -4 / 3 * np.pi]):
+    angles = np.array([0, 2 / 3 * np.pi, 4 / 3 * np.pi])
+    if not mirrored:
+        angles = -1 * angles
+    
+    for i, src_a in enumerate(angles):
         det_a = src_a + np.pi  # opposing
         src = src_rad * np.array([np.cos(src_a), np.sin(src_a), 0])
         det = det_rad * np.array([np.cos(det_a), np.sin(det_a), 0])

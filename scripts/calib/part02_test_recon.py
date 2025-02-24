@@ -1,3 +1,5 @@
+import yaml
+import warnings
 import matplotlib.pyplot as plt
 import pyqtgraph as pq
 import numpy as np
@@ -8,87 +10,67 @@ import cate.xray as xray
 from cate.util import geoms_from_interpolation, plot_projected_markers
 from fbrct.reco import AstraReconstruction
 from scripts.calib.util import *
-from scripts.settings import *
 
-# TODO get settings from yaml (same as part01)
-detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
-                               DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT)
+with open("./calib.yaml") as calib_yaml:
+    calib = yaml.safe_load(calib_yaml)
 
-# TODO update all paths to use pathlib.Path
-# directory of the calibration scan
-DATA_DIR_CALIB = R"d:\XRay\2024-11-14 Rik en Sam"
-MAIN_DIR_CALIB = "preprocessed_Rotation_needles_5degps_again"
-CALIB_FOLDER = Path(DATA_DIR_CALIB) / "calib" / MAIN_DIR_CALIB
+# Extract physical setup fromyaml
+SOURCE_RADIUS = calib["source_radius"]
+DETECTOR_RADIUS = calib["detector_radius"]
+DETECTOR_COLS = calib["detector_cols"]
+DETECTOR_ROWS = calib["detector_rows"]
+DETECTOR_COLS_SPEC = calib["detector_cols_spec"]
+DETECTOR_ROWS_SPEC = calib["detector_rows_spec"]
+DETECTOR_WIDTH_SPEC = calib["detector_width_spec"]
+DETECTOR_HEIGHT_SPEC = calib["detector_height_spec"]
+DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS       # cm
+DETECTOR_HEIGHT = DETECTOR_HEIGHT_SPEC / DETECTOR_ROWS_SPEC * DETECTOR_ROWS     # cm
+DETECTOR_PIXEL_WIDTH = DETECTOR_WIDTH / DETECTOR_COLS
+DETECTOR_PIXEL_HEIGHT = DETECTOR_HEIGHT / DETECTOR_ROWS
+DETECTOR_PIXEL_SPEC = calib['detector_pixel_spec']
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_HEIGHT < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel height ({DETECTOR_PIXEL_HEIGHT:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_WIDTH < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel width ({DETECTOR_PIXEL_WIDTH:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
 
-# directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = R"d:\XRay\2024-11-14 Rik en Sam"
-MAIN_DIR = "preprocessed_Rotation_needles_5degps_again"
-PROJS_PATH = f'{DATA_DIR}\{MAIN_DIR}'
+detector = cate_astra.Detector(
+    DETECTOR_ROWS, DETECTOR_COLS, DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT
+)
 
-# configure which projection range to take
-if MAIN_DIR == "pre_proc_3x10mm_foamballs_vertical_01":
-    proj_start = 37
-    proj_end = 1621
-    ref_path = '/home/adriaan/ownCloud3/pre_proc_Full_30degsec_03'
-    nr_projs = proj_end - proj_start
-elif MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
-    proj_start = 39
-    proj_end = 813  # or 814, depending on who you ask
-    ref_path = '/home/adriaan/ownCloud3/pre_proc_Brightfield'
-    nr_projs = proj_end - proj_start
-elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
-    proj_start = 45
-    proj_end = 1400
-    t_annotated = [50, 501, 953]
-    nr_projs = proj_end - proj_start
-    t_range = range(proj_start, proj_start + nr_projs, 6)
-elif MAIN_DIR == "preprocessed_Alignment_5 (needles)":
-    proj_start = 35
-    proj_end = 1616
-    nr_projs = proj_end - proj_start
-    x = 50  # safety margin for start
-    n_annotated = 6
-    t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
-    t_range = range(proj_start, proj_end, 12)
-    # t_range = np.linspace(proj_start, proj_end, 1, dtype=int)
-elif MAIN_DIR == "preprocessed_c058_0lmin_22Hz":
-    proj_start = 35
-    proj_end = 1616
-    nr_projs = proj_end - proj_start
-    x = 50  # safety margin for start
-    n_annotated = 6
-    t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
-    t_range = [8]
-    # t_range = np.linspace(proj_start, proj_end, 1, dtype=int)
-elif MAIN_DIR == "preprocessed_Rotation_needles_5degps_again":
-    proj_start = 27 #20
-    proj_end = 1610 #1604
-    nr_projs = proj_end - proj_start
-    x = 50  # safety margin for start
-    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
-    t_range = range(proj_start, proj_end, 12)
-    
-    
+""" 1. Extract calibration folder and settings from yaml."""
+root = Path(calib["root"])
+calib_folder = calib["calibration_folder"]
+PROJS_PATH = root / calib_folder
 
+proj_start = calib["rotation"]["start"]
+proj_end = calib["rotation"]["stop"]
+nr_projs = proj_end - proj_start
+x = calib['frames']['start']
+n = calib['frames']['n']
+t_annotated = []
+for i in range(n):
+    t_annotated.append(int(x + i * nr_projs / n))
 
-else:
-    raise Exception()
+mirrored = calib["images_mirrored"]
 
-# postfix of stored claibration
-POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_13june2023'
+for t in t_annotated:
+    assert proj_start <= t < proj_end, f"{t} is not within proj start-end."
 
-t = [497, 958, 1223]
-t_annotated = [497, 958, 1223]
+recon_step = calib["reconstruction"]["step"]
+t_range = range(proj_start, proj_end, recon_step)
 
+calib_path = root / "calib" / calib_folder
 # restore calibration
-multicam_geom = np.load(f'{CALIB_FOLDER}/multicam_geom_{POSTFIX}.npy', allow_pickle=True)
-markers = np.load(f'{CALIB_FOLDER}/markers_{POSTFIX}.npy', allow_pickle=True).item()
+multicam_geom = np.load(calib_path / 'multicam_geom.npy', allow_pickle=True)
+markers = np.load(calib_path / 'markers.npy', allow_pickle=True).item()
 
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
-    fname=MAIN_DIR_CALIB,
-    resource_path=CALIB_FOLDER,
+    fname="needles",
+    resource_path=calib_path,
     cameras=[1, 2, 3],
     open_annotator=False,  # set to `True` if images have not been annotated
     vmin=6.0,

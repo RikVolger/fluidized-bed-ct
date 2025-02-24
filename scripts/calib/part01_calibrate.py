@@ -2,69 +2,63 @@ import numpy as np
 from pathlib import Path
 from cate import astra as cate_astra
 import cate.xray as xray
+import yaml
+import warnings
 from cate.util import plot_projected_markers
 from scripts.calib.util import *
-from scripts.settings import *
+# TODO find a way to avoid import * statements.
 
+
+with open("./calib.yaml") as calib_yaml:
+    calib = yaml.safe_load(calib_yaml)
+
+# Extract physical setup fromyaml
+SOURCE_RADIUS = calib["source_radius"]
+DETECTOR_RADIUS = calib["detector_radius"]
+DETECTOR_COLS = calib["detector_cols"]
+DETECTOR_ROWS = calib["detector_rows"]
+DETECTOR_COLS_SPEC = calib["detector_cols_spec"]
+DETECTOR_ROWS_SPEC = calib["detector_rows_spec"]
+DETECTOR_WIDTH_SPEC = calib["detector_width_spec"]
+DETECTOR_HEIGHT_SPEC = calib["detector_height_spec"]
+DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS       # cm
+DETECTOR_HEIGHT = DETECTOR_HEIGHT_SPEC / DETECTOR_ROWS_SPEC * DETECTOR_ROWS     # cm
+DETECTOR_PIXEL_WIDTH = DETECTOR_WIDTH / DETECTOR_COLS
+DETECTOR_PIXEL_HEIGHT = DETECTOR_HEIGHT / DETECTOR_ROWS
+DETECTOR_PIXEL_SPEC = calib['detector_pixel_spec']
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_HEIGHT < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel height ({DETECTOR_PIXEL_HEIGHT:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_WIDTH < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel width ({DETECTOR_PIXEL_WIDTH:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
 
 detector = cate_astra.Detector(
     DETECTOR_ROWS, DETECTOR_COLS, DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT
 )
 
-# TODO update script to work from a yaml with all these settings. Avoid 
-# scripts.settings import *. Hopefully, also avoid the util import *.
-""" 1. Choose a directory, and find the range of motion in the projections."""
-DATA_DIR = R"d:\XRay\2024-11-14 Rik en Sam"
-MAIN_DIR = "preprocessed_Rotation_needles_5degps_again"
-PROJS_PATH = f"{DATA_DIR}/{MAIN_DIR}"
-POSTFIX = f"{MAIN_DIR}_calibrated_on_14janc2025"  # set this value
+""" 1. Extract calibration folder and settings from yaml."""
+root = Path(calib["root"])
+calib_folder = calib["calibration_folder"]
+PROJS_PATH = root / calib_folder
 
-t_annotated = None
-if MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
-    # first frame before motion
-    # 31-32 shows a very tiny bit of motion, but seems insignificant
-    proj_start = 33
-    # final state frame, img 806 equals 32, so the range should be without 806
-    proj_end = 806
-    nr_projs = proj_end - proj_start  # 773
-    x = 50
-    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
-    ignore_cols = 0  # det width used is 550
-elif MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table534mm":
-    # first frame before motion
-    # 31-32 shows a very tiny bit of motion, but seems insignificant
-    proj_start = 39
-    proj_end = 813  # or 814, depending on who you ask
-    nr_projs = proj_end - proj_start  # 774
-    x = 50
-    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
-    ignore_cols = 0  # det width used is 550
-elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
-    proj_start = 45
-    proj_end = 1400
-    t_annotated = [50, 501, 953]
-    nr_projs = proj_end - proj_start
-elif MAIN_DIR == "preprocessed_Rotation_needles_5degps_again":
-    proj_start = 27 #20
-    proj_end = 1610 #1604
-    nr_projs = proj_end - proj_start
-    x = 50  # safety margin for start
-    t_annotated = [x, int(x + nr_projs / 3), int(x + 2 * nr_projs / 3)]
-    
-else:
-    raise Exception()
+proj_start = calib["rotation"]["start"]
+proj_end = calib["rotation"]["stop"]
+nr_projs = proj_end - proj_start
+x = calib['frames']['start']
+n = calib['frames']['n']
+t_annotated = []
+for i in range(n):
+    t_annotated.append(int(x + i * nr_projs / n))
 
-if t_annotated is None:
-    n_annotated = 6
-    x = 50
-    t_annotated = [int(x + n * nr_projs / n_annotated) for n in range(n_annotated)]
+mirrored = calib["images_mirrored"]
 
 for t in t_annotated:
     assert proj_start <= t < proj_end, f"{t} is not within proj start-end."
 
 
 """ 2. Annotate the projections, for a description of markers, see `util.py`"""
-res_path = Path(DATA_DIR / "calib" / MAIN_DIR)
+res_path = Path(root / "calib" / calib_folder)
 if not res_path.is_dir():
     res_path.mkdir(
         parents=True,       # Also make _all_ parent folders (no safety checks)
@@ -73,10 +67,10 @@ if not res_path.is_dir():
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
-    fname=MAIN_DIR,
+    fname="needles",
     resource_path=res_path,
     cameras=[1, 2, 3],
-    open_annotator=False, #True,  # set to `True` if images have not been annotated
+    open_annotator=True, #True,  # set to `True` if images have not been annotated
     vmin=6.0,
     vmax=10.0,
 )
@@ -86,16 +80,27 @@ cate_astra.pixels2coords(multicam_data, detector)  # convert to physical coords
 """ 3. Set up a multi-camera geometry, where sources, detectors and angles are
 the unknowns."""
 pre_geoms = triangle_geom(SOURCE_RADIUS, DETECTOR_RADIUS, 
-                          rotation=False, shift=False)
+                          rotation=False, shift=False, mirrored=mirrored)
 srcs = [g.source for g in pre_geoms]
 dets = [g.detector for g in pre_geoms]
-# TODO define angles based on a mirroring flag in settings
-angles = 2 * np.pi - ((np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi)
-# angles = (np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi
+
+if mirrored:
+    angles = (np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi
+else:
+    angles = 2 * np.pi - ((np.array(t_annotated) - proj_start) / nr_projs * 2 * np.pi)
 multicam_geom = triple_camera_circular_geometry(
     srcs, dets, angles=angles, optimize_rotation=True)
-multicam_geom_flat = [g for c in multicam_geom for g in c]
-multicam_data_flat = [d for c in multicam_data.values() for d in c]
+# Extract geometries from multicam_geom
+multicam_geom_flat = []
+for c in multicam_geom:
+    for g in c:
+        multicam_geom_flat.append(g)
+# Extract data from multicam_data
+multicam_data_flat = []
+for c in multicam_data.values():
+    for d in c:
+        multicam_data_flat.append(d)
+
 markers = marker_optimization(
     multicam_geom_flat,
     multicam_data_flat,
@@ -115,12 +120,12 @@ markers_from_leastsquares_intersection(
     optimizable=False,
     plot=True)
 
-np.save(f"{res_path}/markers_{POSTFIX}.npy", markers)
+np.save(f"{res_path}/markers.npy", markers)
 
 # calib (export format)
 rotation_0_geoms = {}
 for key, val in zip(multicam_data.keys(), multicam_geom):
     rotation_0_geoms[key] = val[0]._g.asstatic()
-np.save(f"{res_path}/geom_{POSTFIX}.npy", [rotation_0_geoms])
-np.save(f"{res_path}/multicam_geom_{POSTFIX}.npy", multicam_geom)
+np.save(f"{res_path}/geom.npy", [rotation_0_geoms])
+np.save(f"{res_path}/multicam_geom.npy", multicam_geom)
 print("Optimalization results saved.")

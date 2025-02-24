@@ -1,0 +1,33 @@
+# Detector specs (shouldn't change)
+detector_cols_spec: 1548      # also those outside ROI
+detector_rows_spec: 1524      # also those outside ROI
+detector_width_spec: 30.7     # cm, also outside ROI
+detector_height_spec: 30.2    # cm, also outside ROI
+detector_pixel_spec: 0.0198   # cm
+
+# Setup properties (Measurements & Settings)
+# Expected to be the same for all measurements. If you change these half-way, 
+# you'll have to make a new yaml for the second part. If you want to change them
+# throughout your experiments, you'll have to rework the codebase a bit.
+source_radius: 88.5 
+detector_radius: 32.1
+detector_cols: 1548           # including ROI
+detector_rows: 1524           # including ROI
+column_inner_diameter: 19.2   # cm
+column_outer_diameter: 20.0   # cm
+
+# Calibration properties
+root: U:\XRay RPT ChemE\X-ray\Xray_data\2024-11-14 Rik en Sam
+calibration_folder: Rotation_needles_5degps_again
+rotation:
+  start: 27
+  stop: 1610
+frames:
+  start: 50
+  n: 3
+reconstruction:   # for part02
+  step: 120    # smaller step = more frames = better, slower reconstruction
+# Some versions of preprocessing mirror the raw images, some don't. Has a major
+# impact on the calibration. Exact 'error' that you can recognize in the plots
+# will still be added to README (TODO).
+images_mirrored: False
