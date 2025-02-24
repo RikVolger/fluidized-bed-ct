@@ -10,6 +10,7 @@ import scipy.io as scio
 from matplotlib import pyplot as plt
 
 from fbrct import loader, reco, StaticScan, AveragedScan
+from fbrct.scan import FluidizedBedScan
 from scripts.pathbuilders import concpathbuilder, emptypathbuilder, fullpathbuilder, hdf5_filename, mat_filename, pkl_filename
 
 """0. Helper functions"""
@@ -17,52 +18,66 @@ from scripts.pathbuilders import concpathbuilder, emptypathbuilder, fullpathbuil
 
 def create_empty_scan(empty_dir):
     empty = StaticScan(
-            "empty",
-            DETECTOR,
-            str(empty_dir),
-            proj_start=FRAMES['empty']['start'],  # TODO
-            proj_end=FRAMES['empty']['stop'],  # TODO: set higher to reduce noise levels
-            is_full=False,
-            is_rotational=False,  # TODO: check, the column should not rotate!
-            geometry=CALIBRATION_FILE,
-            geometry_scaling_factor=1.0,
-        )
+        "empty",
+        DETECTOR,
+        str(empty_dir),
+        proj_start=FRAMES['empty']['start'],  # TODO
+        proj_end=FRAMES['empty']['stop'],  # TODO: set higher to reduce noise levels
+        is_full=False,
+        is_rotational=False,  # TODO: check, the column should not rotate!
+        geometry=CALIBRATION_FILE,
+        geometry_scaling_factor=1.0,
+    )
 
     return empty
 
 
 def create_full_scan(full_dir):
     full = StaticScan(  # example: a full scan that is not rotating
-            "full",  # give the scan a name
-            DETECTOR,
-            str(full_dir),
-            proj_start=FRAMES['full']['start'],  # TODO
-            proj_end=FRAMES['full']['stop'],  # TODO: set higher for less noise
-            is_full=True,
-            is_rotational=False,  # TODO: check, the column should not rotate!
-            geometry=CALIBRATION_FILE,
-            geometry_scaling_factor=1.0,
-        )
+        "full",  # give the scan a name
+        DETECTOR,
+        str(full_dir),
+        proj_start=FRAMES['full']['start'],  # TODO
+        proj_end=FRAMES['full']['stop'],  # TODO: set higher for less noise
+        is_full=True,
+        is_rotational=False,  # TODO: check, the column should not rotate!
+        geometry=CALIBRATION_FILE,
+        geometry_scaling_factor=1.0,
+    )
 
     return full
 
 
 def create_avg_scan(scan_dir):
     t_avg = AveragedScan(
-            scan_dir.name,
-            DETECTOR,
-            str(scan_dir),
-            proj_start=FRAMES['measurements']['start'],
-            proj_end=FRAMES['measurements']['stop'],
-            # liter_per_min=None,  # liter per minute (set None to ignore)
-            # projs=range(5, 2640),  # TODO: set this to a valid range
-            projs_offset={1: 0, 2: 0, 3: 0},
-            geometry=CALIBRATION_FILE,
-            cameras=(1, 2, 3),
-            col_inner_diameter=COLUMN_ID,
-        )
+        scan_dir.name,
+        DETECTOR,
+        str(scan_dir),
+        proj_start=FRAMES['measurements']['start'],
+        proj_end=FRAMES['measurements']['stop'],
+        projs_offset={1: 0, 2: 0, 3: 0},
+        geometry=CALIBRATION_FILE,
+        cameras=(1, 2, 3),
+        col_inner_diameter=COLUMN_ID,
+    )
 
     return t_avg
+
+
+def create_res_scan(scan_dir):
+    scan = FluidizedBedScan(
+        scan_dir.name,
+        DETECTOR,
+        str(scan_dir),
+        # liter_per_min=None,  # liter per minute
+        proj_start=FRAMES['measurements']['start'],
+        proj_end=FRAMES['measurements']['stop'],
+        projs_offset={1: 0, 2: 1, 3: 1},
+        geometry=CALIBRATION_FILE,
+        cameras=(1, 2, 3),
+        col_inner_diameter=COLUMN_ID,
+    )
+    return scan
 
 
 def reconstruct(t_avg, recon, algo, sino_t, niters, voxel_size, recon_size, mask_size, init):
@@ -190,6 +205,7 @@ RECON_VOLUMES = scans['recon_volumes']
 VOXEL_SIZES = scans['voxel_sizes']
 MASK_SIZES = scans['mask_sizes']
 INITIALIZATION = scans['initialize']
+TIME = scans['time']
 
 """2. Configuration of pre-experiment scans. Use `StaticScan` for scans where
 the imaged object is not dynamic.
@@ -223,12 +239,18 @@ for day in scans['measurements']:
         ref_paths = get_ref_paths(exp_ref, day_ref, global_ref)
         exp_path = Path(day['root'], experiment['measured'])
 
+        # make a choice between global and experiment-specific start and stop
+
         empty = create_empty_scan(ref_paths['empty'])
         full = create_full_scan(ref_paths['full'])
         # dark = create_dark_scan(ref_paths['dark'])
-        t_avg = create_avg_scan(exp_path)
+        if TIME == 'averaged':
+            # TODO explicitly pass start and stop frames
+            scan = create_avg_scan(exp_path)
+        elif TIME == 'resolved':
+            scan = create_res_scan(exp_path)
 
-        timeframes = range(t_avg.proj_start, t_avg.proj_end)
+        timeframes = range(scan.proj_start, scan.proj_end)
 
         ref = full
         ref_reduction = 'median'
@@ -238,14 +260,14 @@ for day in scans['measurements']:
 
         # reconstruction steps
         assert np.all(
-            [t in loader.projection_numbers(t_avg.projs_dir) for t in timeframes])
+            [t in loader.projection_numbers(scan.projs_dir) for t in timeframes])
         recon = reco.AstraReconstruction(
-            t_avg.projs_dir,
-            detector=t_avg.detector)
+            scan.projs_dir,
+            detector=scan.detector)
 
         sino = recon.load_sinogram(
             t_range=timeframes,
-            t_offsets=t_avg.projs_offset,
+            t_offsets=scan.projs_offset,
             ref_rotational=ref_rotational,
             ref_reduction=ref_reduction,
             ref_path=ref_path,
@@ -256,12 +278,11 @@ for day in scans['measurements']:
             darks_ran=range(FRAMES['dark']['start'], FRAMES['dark']['stop']),
             darks_path=ref_paths['dark'],
             ref_full=ref.is_full,
-            density_factor=t_avg.density_factor,
-            col_inner_diameter=t_avg.col_inner_diameter,
+            density_factor=scan.density_factor,
+            col_inner_diameter=scan.col_inner_diameter,
             # scatter_mean_full=600,
             # scatter_mean_empty=500,
-            averaged=True,
-            correct_beam_hardening=CORRECT_BEAM_HARDENING
+            time=TIME,
         )
 
         algo = 'sirt'
@@ -272,7 +293,7 @@ for day in scans['measurements']:
                 if len(RECON_VOLUMES) > 1 and len(MASK_SIZES) == 1:
                     mask_size = recon_size['side']
                 tic = time.perf_counter()
-                loss, x = reconstruct(t_avg, recon, algo, sino_t, NITERS,
+                loss, x = reconstruct(scan, recon, algo, sino_t, NITERS,
                                       voxel_size, recon_size, mask_size, INITIALIZATION)
                 toc = time.perf_counter()
                 print(f"Reconstructing took {toc-tic:.0f} seconds")
@@ -285,7 +306,7 @@ for day in scans['measurements']:
                     'volume_height': recon_size['height'],
                     'voxel_size': voxel_size,
                     'mask_size': mask_size,
-                    'scan_folder': t_avg.projs_dir,
+                    'scan_folder': scan.projs_dir,
                     'empty_folder': empty.projs_dir,
                     'full_folder': full.projs_dir,
                     'iterations': NITERS,
@@ -299,7 +320,6 @@ for day in scans['measurements']:
                     resolution=len(VOXEL_SIZES) > 1,
                     mask=len(MASK_SIZES) > 1,
                     init=INITIALIZATION,
-                    bhc=CORRECT_BEAM_HARDENING,
                     recon_size=recon_size,
                     voxel_size=voxel_size,
                     mask_size=mask_size)

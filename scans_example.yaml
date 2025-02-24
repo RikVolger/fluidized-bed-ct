@@ -4,6 +4,7 @@ detector_rows_spec: 1524      # also those outside ROI
 detector_width_spec: 30.7     # cm, also outside ROI
 detector_height_spec: 30.2    # cm, also outside ROI
 detector_pixel_spec: 0.0198   # cm
+
 # Setup properties (Measurements & Settings)
 # Expected to be the same for all measurements. If you change these half-way, 
 # you'll have to make a new yaml for the second part. If you want to change them
@@ -26,7 +27,9 @@ frames:
   - start: 10
     stop: 200
 # Reconstruction settings
-number_of_iterations: 200
+time: averaged
+# time: resolved
+number_of_iterations: 20
 investigate_loss: False
 recon_volumes:  # in cm
 - side: 21
@@ -49,7 +52,7 @@ initialize: flat  # 'flat', 'ones' or 'parabolic'
 measurements:
 # Example with single empty, full and dark measurements for all experiments
 - day: 01-01-1999
-  root: D:\XRay\1999-01-01 Evert
+  root: D:\XRay\1999-01-01 Evert\
   # If the same 'empty', 'dark', or 'full' can be used for all reconstructions 
   # on this day: Provide relative paths here (day-paths). They will overwrite 
   # the global paths
@@ -90,6 +93,13 @@ measurements:
   root: D:\XRay\1999-01-04 Evert
   reconstructions:
   - measured: preprocessed_Water_10lmin
+    frames:
+      start: 10
+      end: 200
+  - measured: preprocessed_Water_10lmin
+    frames:
+      start: 300
+      end: 500
   - measured: preprocessed_Water_20lmin
   - measured: preprocessed_Water_30lmin
   - measured: preprocessed_Water_40lmin
