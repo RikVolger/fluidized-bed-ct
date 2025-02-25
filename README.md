@@ -11,19 +11,21 @@ scripts allow
 If you don't have _conda_ installed, find some installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Do **not** use the TU Delft Software Center version of anaconda.
 
 ### 1.1. Rapid install
-The fastest way of installing is to clone this repository and create a `conda` environment
-from the `requirements.txt` file in there. A working conda environment has been
-exported into this file, so functionality is guaranteed (for Windows).
+The fastest way of installing is to clone this repository and create a `conda`
+environment from the `requirements.yaml` file in there. A working conda
+environment has been exported into this file, so functionality is guaranteed,
+probably (for Windows).
 
-In the terminal, navigate to a folder where you want to keep the code (preferable local,
-on the `C:` drive \[for Windows\]). There, download this repository:
+In the terminal, navigate to a folder where you want to keep the code
+(preferable local, on the `C:` drive \[for Windows\]). There, download this
+repository:
 ```shell
 git clone https://github.com/RikVolger/fluidized-bed-ct.git
 ```
 You can then install the environment specified in requirements.txt as a new environment:
 ```shell
 cd path/to/fluidized-bed-ct
-conda create --name fluidized_bed_ct --file requirements.txt
+conda env create -f environment.yaml
 conda activate fluidized_bed_ct
 conda develop .
 ```
@@ -71,26 +73,34 @@ cd ../
 git clone https://github.com/adriaangraas/cate
 ```
 ### Adapting for Windows
-If you're running the scripts from windows, in `fbrct/loader.py`, the `PROJECTION_FILE_REGEX` needs to be adapted to `"camera ([1-3])\\\img_([0-9]{1,6})\.tif$"` to deal with backslash folder separation in Windows
+If you're running the scripts from windows, in `fbrct/loader.py`, the `PROJECTION_FILE_REGEX` 
+needs to be adapted to `"camera ([1-3])\\\img_([0-9]{1,6})\.tif$"` to deal with 
+backslash folder separation in Windows
 
 ## 2. Run a calibration
 
 In **scripts/calib/** there are scripts that show how to calibrate the
 geometry using a marker object with glued metal markers on it. The scripts can
 be modified to your needs.
+The calibration relies on the values indicated in `calib.yaml` in the root 
+folder. Here, you indicate the root folder for the calibration files (e.g. 
+`U:\XRay RPT ChemE\X-ray\Xray_data\2024-11-14 Rik en Sam`), and the folder
+containing the actual images (e.g. `Rotation_needles_5degps_again`).
 1. First, using _ImageJ_ or an image editor of choice, find the first and 
-   last frame of rotation. Use these as `proj_start` and `proj_end`
-   values. Also select three frames for annotation. More is possible but not necessary.
-   A good idea is to space them equally apart. For example, if the setup
-   moves between frames 11 and 110 then take frames 11, 44, 77. Sometimes
-   markers are barely visible in the column walls. That is fine, just make
-   a guess, or pick a different frame. The frames don't have to be perfectly
-   spaced. Use the chosen values in `t_annotated`.
-2. The function `annotated_data()` helps quickly selecting marker points in the images. 
-   The tool is a bit rudimental, but should get the job done. If `open_annotation`
+   last frame of rotation. Use these as `rotation:start` and `rotation:stop`
+   values. _n_ frames for annotation are automatically selected, starting at
+   `frames:start`. 3 frames is generally enough. More is possible but not
+   necessary.
+   Sometimes markers are barely visible in the column walls. That is fine, just
+   make a guess.
+2. The function `annotated_data()` helps quickly selecting marker points in the
+   images. 
+   The tool is a bit rudimental, but should get the job done. If 
+   `open_annotation`
    is `True` the tool annotates, if it is `False`, the tool returns previously
    annotated values. The function creates some NumPy files in the background
-   to store the annotations.
+   to store the annotations. These are stored next to your raw data, in a folder 
+   `calib`
 3. The script then builds a triangular geometry and uses that as an initial
    guess for the set-up. The parametrization is that of a static set-up with
    three sources and detectors that undergoes fixed rotations along a single
@@ -102,18 +112,14 @@ be modified to your needs.
    the annotated markers are found using a least-squares intersection in the
    3D volume. If `plot=True` is passed, a plot will show the positions of
    the markers with their lines of projection. This should show how good/bad 
-   the current solution is.  The CaTE geometries are stored in a file `geom_{...}.npy` afterward. These
-   files need to be copied and used for later reconstructions. The found
-   marker positions are also stored, but only for later convenience.
+   the current solution is.  The CaTE geometries are stored in a file `geom.npy`
+   afterward, in the `calib` folder.
+   The found marker positions are also stored, but only for later convenience.
 
-The (optional) script _part02_test_recon.py_ is to help figure out 
-out how accurate the reconstruction is. The projections from the marker scan be used to reconstruct
-the marker object. There is a superfluous amount of data, since 3 detectors
-are used for a rotational scan. To reconstruct the object, the geometry 
-parameters of all not-annotated projections can be found by interpolation
-in the direction of rotation. If the reconstructed object looks sharp, the
-geometry parameters are likely correct. For a more detailed quantity, the
-reconstructed marker column again be forward-projected again, giving
-simulated projection images. The residual between the real projection
-images, and the simulated projection images, i.e., y - AA^Tx, should be
-small.
+The (optional, but recommended) script _part02_test_recon.py_ is to help figure
+out how accurate the reconstruction is. The projections from the marker scan be
+used to reconstruct the marker object. There is a superfluous amount of data,
+since 3 detectors are used for a rotational scan. To reconstruct the object, the
+geometry parameters of all not-annotated projections can be found by
+interpolation in the direction of rotation. If the reconstructed object 
+(especially the needles) looks sharp, the geometry parameters are likely correct.
