@@ -28,7 +28,6 @@ def _collect_fnames(
 
     results, results_filenames = [], []
     regex = re.compile(regex)
-    print(path)
     for root, dirs, files in os.walk(path):
         for file in files:
             full_filename = os.path.join(root, file)
@@ -51,15 +50,23 @@ def _collect_fnames(
     return results, results_filenames
 
 
+def roughly_equal(n1, n2, play=100):
+    """Determine if n1 and n2 are roughly equal - within an absolute margin (play)"""
+    n2_min = n2 - play
+    n2_max = n2 + play
+    return n2_min < n1 < n2_max
+
+
 def load(
     path: str,
     time_range: range = None,
-    time_offsets = None,
+    time_offsets=None,
     regex: str = PROJECTION_FILE_REGEX,
     dtype=np.float32,
     verbose: bool = True,
     cameras: Sequence = (1, 2, 3),
     detector_rows: Sequence = None,
+    average: bool = False,
 ):
     """Load a stack of data from disk using a pattern."""
 
@@ -71,7 +78,10 @@ def load(
     amount_matches = lists[0].count(first_cam)
     assert amount_matches > 0
     for cam in cameras:
-        assert amount_matches == lists[0].count(cam)
+        if average:
+            assert roughly_equal(amount_matches, lists[0].count(cam)) is True
+        else:
+            assert amount_matches == lists[0].count(cam)
 
     if time_range is None:
         time_range = range(np.min(lists[1]), np.max(lists[1]) + 1)
@@ -82,38 +92,48 @@ def load(
         rows = slice(0, im_shape[0])
     else:
         rows = slice(detector_rows.start, detector_rows.stop)
-    ims = np.zeros((len(time_range), len(cameras), *im_shape), dtype=dtype)
+
+    if average:
+        ims = np.zeros((1, len(cameras), *im_shape), dtype=dtype)
+    else:
+        ims = np.zeros((len(time_range), len(cameras), *im_shape), dtype=dtype)
 
     # make a dictionary with in the first key the detector, and second key
     # the timestep
-    nested_dict = {i: {} for i in cameras}
+    detector_timesteps = {i: {} for i in cameras}
     for i, ((cam_id, t), filename) in enumerate(
-        zip(results, results_filenames)):
+            zip(results, results_filenames)):
         if cam_id in cameras:
             t_actual = t - time_offsets[cam_id] if time_offsets is not None else t
-            nested_dict[cam_id][t_actual] = filename
+            detector_timesteps[cam_id][t_actual] = filename
 
     # check if wanted timesteps are in the dict, and load them
+    count = 0
     for t_i, t in enumerate(tqdm(time_range)) if verbose else enumerate(
-        time_range):
-        for d_i, d in enumerate(nested_dict.keys()):
-            if not t in nested_dict[d]:
+            time_range):
+        # print(t)
+        for d_i, d in enumerate(detector_timesteps.keys()):
+            if t not in detector_timesteps[d]:
                 raise FileNotFoundError(
                     f"Could not find timestep {t} from "
                     f"detector {d} in directory {path}."
                 )
             if verbose:
-                print("Reading ", nested_dict[d][t])
-            # faster but imageio may be easier to install
-            ims[t_i, d_i, rows] = \
-                tifffile.imread(nested_dict[d][t], maxworkers=1)[
-                # imageio.v2.imread(nested_dict[d][t])[
-                        detector_rows]
+                tqdm.write(f"Reading {detector_timesteps[d][t]}")
+            if average:
+                ims[0, d_i, rows] += tifffile.imread(detector_timesteps[d][t],
+                                                     maxworkers=1)[detector_rows][0]
+                count += 1
+            else:
+                ims[t_i, d_i, rows] = tifffile.imread(detector_timesteps[d][t],
+                                                      maxworkers=1)[detector_rows]
+    if average:
+        ims /= count
 
     return np.ascontiguousarray(ims)
 
 
-@memory.cache
+# @memory.cache
 def reference_via_mode(data, qu=1, deg=20, nr_bins=100, nr_linspace=1000):
     xp = np
     data = xp.asarray(data)
@@ -195,9 +215,10 @@ def _scatter_correct(meas, scatter_mean: float = 0.0):
 
 
 def compute_bed_density(empty, ref, L: float, nr_bins=1000,
-                        max_bed_val=1.0) -> float:
+                        max_bed_val=None) -> float:
     """Computes the average bed density along a ray with length L, using an
     empty column, histogram with `nr_bins` bins."""
+    # ref is generally the full image.
 
     # computing log(ref/meas) / log(ref)
     # should be normalized between 0 and 1
@@ -207,33 +228,35 @@ def compute_bed_density(empty, ref, L: float, nr_bins=1000,
     # This is an annoying value that I need to have in here, because sometimes
     # pieces of metal appear in the bed and they have huge attenuation. In such
     # case the modal value of the bed gets disturbed.
-    np.clip(bed, 0., max_bed_val, out=bed)
+    np.clip(bed, 0.0, max_bed_val, out=bed)
     _isfinite(bed)
 
-    np.clip(bed, 0.0, None, out=bed)
-
+    modal_values = np.zeros(bed.shape)
     sum = 0.0
     for i in range(bed.shape[0]):
-        counts, bins = np.histogram(bed[i].flatten(), bins=nr_bins)
+        counts, bins = np.histogram(bed[i, :, 500:1000].flatten(), bins=nr_bins)
         counts[:100] = 0.0
         max_value = bins[np.argmax(counts)]  # corresponds to inner diam
         print(f"Proj {i}: mode of column statistic: ", max_value)
         print(f"Proj {i}: density approx.: ", 1 / L * max_value)
         # import matplotlib.pyplot as plt
         # plt.figure()
-        # plt.hist(bed.flatten(), bins=1000)
+        # plt.hist(bed[i, :, 500:1000].flatten(), bins=1000)
         # plt.show()
         sum += (1 / L) * max_value
+        modal_values[i, ...] = max_value / L
 
     avg = sum / bed.shape[0]  # average density over nr. projs/cams
     print("Average density: ", avg)
-    return avg
+    return modal_values
+    # return avg
+    # return bed
 
 
 def preprocess(
     meas,
     ref=None,
-    scaling_factor=1.0,
+    density_factor=1.0,
     dtype=np.float32,
     ref_full=True,
 ):
@@ -256,7 +279,7 @@ def preprocess(
         np.clip(meas, 1.0, None, out=meas)
 
     np.log(meas, out=meas)
-    np.multiply(meas, scaling_factor, out=meas)
+    np.divide(meas, density_factor, out=meas, where=density_factor != 0)
     _isfinite(meas)
     return meas.astype(dtype)
 

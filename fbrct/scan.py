@@ -170,6 +170,8 @@ class Scan(ABC):
         darks=None,
         empty=None,
         is_rotational: bool = False,
+        # TODO 'Rotated' is ambiguous. Perhaps change to 'cropping dimension' with
+        # value 'height' or 'width'
         cams_are_rotated: bool = False,
         is_full: bool = False,
         col_inner_diameter: float = None,
@@ -268,6 +270,37 @@ class DynamicScan(Scan):
             )
 
 
+class AveragedScan(Scan):
+    """The scanned object changes over time but we're interested in time-averages."""
+
+    def __init__(
+        self,
+        name,
+        detector,
+        projs_dir,
+        proj_start: int,
+        proj_end: int,
+        **kwargs,
+    ):
+        assert proj_end > proj_start > 0
+        self.proj_start = proj_start
+        self.proj_end = proj_end
+        projs = list(range(proj_start, proj_end))
+        super().__init__(name, detector, projs_dir, projs, **kwargs)
+
+    def geometry(self):
+        if self._geometry_manual:
+            geoms = _manual_geometry(self.cameras, nr_projs=1)
+            return [g[0] for g in geoms]  # flattening
+
+        if self._geometry:
+            return cate_to_astra(
+                self._geometry,
+                self.detector,
+                self._geometry_scaling_factor,
+            )
+
+
 class TraverseScan(DynamicScan):
     def __init__(self, *args, timeframes, motor_velocity, **kwargs):
         self.timeframes = timeframes
@@ -279,7 +312,14 @@ class TraverseScan(DynamicScan):
 
 
 class FluidizedBedScan(DynamicScan):
-    def __init__(self, *args, liter_per_min, **kwargs):
+    def __init__(self,
+                 name,
+                 detector,
+                 projs_dir,
+                 proj_start: int,
+                 proj_end: int,
+                 liter_per_min=None,
+                 **kwargs):
         self.liter_per_min = liter_per_min
         assert 'is_rotational' not in kwargs or kwargs[
             'is_rotational'] is False, ("FluidizedBedScan is not rotational.")
@@ -287,4 +327,10 @@ class FluidizedBedScan(DynamicScan):
             "FluidizedBedScan is always with full column.")
         kwargs['is_full'] = True
         kwargs['is_rotational'] = False
-        super().__init__(*args, **kwargs)
+
+        assert proj_end > proj_start > 0
+        self.proj_start = proj_start
+        self.proj_end = proj_end
+        projs = list(range(proj_start, proj_end))
+
+        super().__init__(name, detector, projs_dir, projs, **kwargs)

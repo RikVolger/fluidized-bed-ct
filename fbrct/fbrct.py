@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def column_mask_2d(shp, r=None, center=None):
+def column_mask_2d(shp, r=None, center=None, val=lambda x, y: 1):
     """Generate a 2D mask binary mask
 
     :param shp: Shape tuple
@@ -27,12 +27,12 @@ def column_mask_2d(shp, r=None, center=None):
     for x in range(cx - r, cx + r):
         for y in range(cy - r, cy + r):
             if dist(cx, cy, x, y) <= r * r:
-                v[x][y] = 1
+                v[x][y] = val(x, y)
 
     return v
 
 
-def column_mask(shp, r=None, center=None):
+def column_mask(shp, r=None, center=None, val=lambda x, y: 1):
     """Generate a 3D binary mask
 
     :param shp: Shape tuple
@@ -44,7 +44,7 @@ def column_mask(shp, r=None, center=None):
     s1, s2, s3 = shp
 
     col = np.empty(shp)
-    col[..., 0] = column_mask_2d((s1, s2), r, center)
+    col[..., 0] = column_mask_2d((s1, s2), r, center, val)
     for k in range(1, s3):
         col[..., k] = col[..., 0]
 

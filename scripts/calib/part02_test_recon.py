@@ -1,3 +1,5 @@
+import yaml
+import warnings
 import matplotlib.pyplot as plt
 import pyqtgraph as pq
 import numpy as np
@@ -8,61 +10,68 @@ import cate.xray as xray
 from cate.util import geoms_from_interpolation, plot_projected_markers
 from fbrct.reco import AstraReconstruction
 from scripts.calib.util import *
-from scripts.settings import *
 
-detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
-                               DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT)
+with open("./calib.yaml") as calib_yaml:
+    calib = yaml.safe_load(calib_yaml)
 
-CALIB_FOLDER = Path(__file__).parent
+# Extract physical setup fromyaml
+SOURCE_RADIUS = calib["source_radius"]
+DETECTOR_RADIUS = calib["detector_radius"]
+DETECTOR_COLS = calib["detector_cols"]
+DETECTOR_ROWS = calib["detector_rows"]
+DETECTOR_COLS_SPEC = calib["detector_cols_spec"]
+DETECTOR_ROWS_SPEC = calib["detector_rows_spec"]
+DETECTOR_WIDTH_SPEC = calib["detector_width_spec"]
+DETECTOR_HEIGHT_SPEC = calib["detector_height_spec"]
+DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS       # cm
+DETECTOR_HEIGHT = DETECTOR_HEIGHT_SPEC / DETECTOR_ROWS_SPEC * DETECTOR_ROWS     # cm
+DETECTOR_PIXEL_WIDTH = DETECTOR_WIDTH / DETECTOR_COLS
+DETECTOR_PIXEL_HEIGHT = DETECTOR_HEIGHT / DETECTOR_ROWS
+DETECTOR_PIXEL_SPEC = calib['detector_pixel_spec']
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_HEIGHT < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel height ({DETECTOR_PIXEL_HEIGHT:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_WIDTH < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel width ({DETECTOR_PIXEL_WIDTH:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
 
-# directory of the calibration scan
-DATA_DIR_CALIB = R"U:\Xray RPT ChemE\X-ray\Xray_data\2023-02-10 Sophia SBI"
-MAIN_DIR_CALIB = "pre_proc_VROI500_1000_Cal_20degsec"
+detector = cate_astra.Detector(
+    DETECTOR_ROWS, DETECTOR_COLS, DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT
+)
 
-# directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = "U:\Xray RPT ChemE\X-ray\Xray_data\\2023-02-10 Sophia SBI"
-MAIN_DIR = "pre_proc_VROI500_1000_Cal_20degsec"
-PROJS_PATH = f'{DATA_DIR}/{MAIN_DIR}'
+""" 1. Extract calibration folder and settings from yaml."""
+root = Path(calib["root"])
+calib_folder = calib["calibration_folder"]
+PROJS_PATH = root / calib_folder
 
-# configure which projection range to take
-if MAIN_DIR == "pre_proc_3x10mm_foamballs_vertical_01":
-    proj_start = 37
-    proj_end = 1621
-    ref_path = '/home/adriaan/ownCloud3/pre_proc_Full_30degsec_03'
-    nr_projs = proj_end - proj_start
-elif MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
-    proj_start = 39
-    proj_end = 813  # or 814, depending on who you ask
-    ref_path = '/home/adriaan/ownCloud3/pre_proc_Brightfield'
-    nr_projs = proj_end - proj_start
-elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
-    proj_start = 45
-    proj_end = 1400
-    t_annotated = [50, 501, 953]
-    nr_projs = proj_end - proj_start
-    n_t_points = 120
-    step_size = int(nr_projs / n_t_points)
-    t_range = range(proj_start, proj_end, step_size)
-else:
-    raise Exception()
+proj_start = calib["rotation"]["start"]
+proj_end = calib["rotation"]["stop"]
+nr_projs = proj_end - proj_start
+x = calib['frames']['start']
+n = calib['frames']['n']
+t_annotated = []
+for i in range(n):
+    t_annotated.append(int(x + i * nr_projs / n))
 
-# postfix of stored claibration
-POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_06feb2024'
+mirrored = calib["images_mirrored"]
 
-t = t_annotated
-# t = [497, 958, 1223]
-# t_annotated = [497, 958, 1223]
+for t in t_annotated:
+    assert proj_start <= t < proj_end, f"{t} is not within proj start-end."
 
+recon_step = calib["reconstruction"]["step"]
+t_range = range(proj_start, proj_end, recon_step)
+
+calib_path = root / "calib" / calib_folder
 # restore calibration
-multicam_geom = np.load(f'{CALIB_FOLDER}/resources/multicam_geom_{POSTFIX}.npy', allow_pickle=True)
-markers = np.load(f'{CALIB_FOLDER}/resources/markers_{POSTFIX}.npy', allow_pickle=True).item()
+multicam_geom = np.load(calib_path / 'multicam_geom.npy', allow_pickle=True)
+markers = np.load(calib_path / 'markers.npy', allow_pickle=True).item()
 
 res_path = CALIB_FOLDER / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
-    fname=MAIN_DIR,
-    resource_path=res_path,
+    fname="needles",
+    resource_path=calib_path,
     cameras=[1, 2, 3],
     open_annotator=False,  # set to `True` if images have not been annotated
     vmin=6.0,
@@ -70,10 +79,10 @@ multicam_data = annotated_data(
 )
 cate_astra.pixels2coords(multicam_data, detector)  # convert to physical coords
 
-for cam in range(1, 4):
-    for d1, d2 in zip(multicam_data[cam],
-                      xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
-        plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
+# for cam in range(1, 4):
+#     for d1, d2 in zip(multicam_data[cam],
+#                     xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
+#         plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
 
 
 detector_cropped = cate_astra.crop_detector(detector, 0)
@@ -88,14 +97,29 @@ for cam_id in range(1, 4):
         interpolation_calibration_nrs=t_annotated,
         plot=False)
     all_geoms.extend(geoms_interp)
+
     projs = reco.load_sinogram(t_range=t_range, cameras=[cam_id],
-                               ref_full=False)
+                               ref_full=False) # ref_rotational = True?
     projs = prep_projs(projs)
     all_projs.append(projs)
-all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
 
+if len(all_projs[0].shape) < 3:
+    all_projs = np.array(all_projs).swapaxes(1, 2)
+else:
+    all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
+
+scaling = 1.5
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
-    reco, all_projs, all_geoms, 'fdk', [400, 400, 1500], 0.0198)
+    reco,
+    all_projs,
+    all_geoms,
+    'fdk',
+    [int(1500/scaling), int(1500/scaling), int(1500/scaling)],
+    0.016 * scaling,
+    max_constraint=1.0,
+    r=int(20/2/(0.016*scaling)),
+    iters=200
+    )
 x = reco.volume(vol_id)
 x = np.transpose(x, (2, 1, 0))
 print(x.shape)
