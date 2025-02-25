@@ -66,7 +66,6 @@ calib_path = root / "calib" / calib_folder
 multicam_geom = np.load(calib_path / 'multicam_geom.npy', allow_pickle=True)
 markers = np.load(calib_path / 'markers.npy', allow_pickle=True).item()
 
-res_path = CALIB_FOLDER / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
@@ -99,7 +98,7 @@ for cam_id in range(1, 4):
     all_geoms.extend(geoms_interp)
 
     projs = reco.load_sinogram(t_range=t_range, cameras=[cam_id],
-                               ref_full=False) # ref_rotational = True?
+                               ref_full=False, time="resolved") # ref_rotational = True?
     projs = prep_projs(projs)
     all_projs.append(projs)
 
@@ -127,20 +126,5 @@ pq.image(x)
 plt.figure()
 plt.imshow(x[300, :, :])
 plt.show()
-
-for res_cam_id in range(1, 4):
-    projs_annotated = reco.load_sinogram(
-        t_range=t_annotated,
-        cameras=[res_cam_id])
-    projs_annotated = prep_projs(projs_annotated)
-    res = astra_residual(reco,
-                         projs_annotated, vol_id, vol_geom,
-                         multicam_geom[res_cam_id - 1])
-    plot_projections(res, title='res')
-    plot_projections(projs_annotated, title='projs')
-    plot_projections(astra_project(
-        reco, vol_id, vol_geom,
-        multicam_geom[res_cam_id - 1]), title='reprojs')
-    plt.show()
 
 reco.clear()
