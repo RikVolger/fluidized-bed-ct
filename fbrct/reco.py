@@ -18,6 +18,7 @@ memory = Memory(cachedir, verbose=0)
 
 def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
     import astra
+    import astra.experimental
 
     proj_cfg = {
         "type": "cuda3d",
@@ -301,7 +302,14 @@ class AstraReconstruction(Reconstruction):
             cols,
             np.array(vectors),
         )
-        sinogram = np.swapaxes(sinogram, 0, 1)
+        print("Shape of sinogram before swapaxes:", type(sinogram), getattr(sinogram, "shape", "No shape attribute"))
+        #sinogram = np.swapaxes(sinogram, 0, 1)
+        if len(sinogram.shape) == 2:
+            sinogram = np.swapaxes(sinogram, 0, 1)
+        elif len(sinogram.shape) == 3:
+             sinogram = np.swapaxes(sinogram, 1, 2)  # Probeer alternatieve aswisseling
+        else:
+            raise ValueError(f"Unexpected sinogram shape: {sinogram.shape}")
         proj_id = astra.data3d.create("-sino", proj_geom, sinogram)
         return proj_id, proj_geom
 

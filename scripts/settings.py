@@ -10,8 +10,8 @@ from fbrct.scan import (
     MovingPhantom,
 )
 
-SOURCE_RADIUS = 94.5
-DETECTOR_RADIUS = 27.0
+SOURCE_RADIUS = 95
+DETECTOR_RADIUS = 30
 DETECTOR_COLS = 1130  # including ROI
 DETECTOR_ROWS = 1548  # including ROI 1548
 DETECTOR_COLS_SPEC = 1524  # also those outside ROI

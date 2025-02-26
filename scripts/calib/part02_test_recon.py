@@ -10,6 +10,9 @@ from scripts.settings import *
 detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
                                DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT)
 
+CALIB_FOLDER = Path(__file__).parent
+
+
 # directory of the calibration scan
 DATA_DIR_CALIB = r"U:\Xray RPT ChemE\X-ray\Xray_data\2024-05-16 Lisanne\VROI190_1320"
 MAIN_DIR_CALIB = "pre_proc_VROI190_1320_needles_10degsec"
@@ -50,7 +53,7 @@ multicam_geom = np.load(f'multicam_geom_{POSTFIX}.npy', allow_pickle=True)
 markers = np.load(f'markers_{POSTFIX}.npy', allow_pickle=True).item()
 
 
-
+res_path = CALIB_FOLDER / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
@@ -72,19 +75,25 @@ reco = AstraReconstruction(PROJS_PATH, detector_cropped.todict())
 
 all_geoms = []
 all_projs = []
-for cam_id in range(1, 4):
-    geoms_interp = geoms_from_interpolation(
-        interpolation_geoms=multicam_geom[cam_id - 1],
-        #interpolation_geoms=[multicam_geom[0][cam_id]],
-        interpolation_nrs=t,
-        interpolation_calibration_nrs=t_annotated,
-        plot=False)
-    all_geoms.extend(geoms_interp)
+for cam_id in range(1, 2):
+    # geoms_interp = geoms_from_interpolation(
+    #     interpolation_geoms=multicam_geom[cam_id - 1],
+    #     interpolation_nrs=t,
+    #     interpolation_calibration_nrs=t_annotated,
+    #     plot=False)
+    all_geoms.extend(multicam_geom[cam_id - 1])
     projs = reco.load_sinogram(t_range=t, cameras=[cam_id],
                                ref_full=True)
     projs = prep_projs(projs)
     all_projs.append(projs)
 all_projs = np.concatenate(all_projs, axis=0)
+
+print("Original shape of all_projs:", all_projs.shape)
+
+# Transpose om dimensies te corrigeren
+all_projs = np.transpose(all_projs, (1, 0, 2))
+print("Transposed shape of all_projs:", all_projs.shape)
+
 
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
     reco, all_projs, all_geoms, 'FDK', [100 * 3, 100 * 3, 200 * 3], 0.025 * 2)

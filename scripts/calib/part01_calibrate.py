@@ -57,12 +57,14 @@ for t in t_annotated:
 
 """ 2. Annotate the projections, for a description of markers, see `util.py`"""
 res_path = Path(PROJS_PATH) / "calibration"
+# res_path = Path(__file__).parent / "resources"
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
     fname=MAIN_DIR,
+    resource_path=res_path,
     cameras=[1, 2, 3],
-    open_annotator=False,  # set to `True` if images have not been annotated
+    open_annotator=False, #True,  # set to `True` if images have not been annotated
     vmin=6.0,
     vmax=10.0,
 )
@@ -80,10 +82,6 @@ multicam_geom = triple_camera_circular_geometry(
     srcs, dets, angles=angles, optimize_rotation=True)
 
 
-save_dir = "resources"
-if not os.path.exists(save_dir):
-    os.makedirs(save_dir)
-
 """ 4. Perform the optimization """
 multicam_geom_flat = [g for c in multicam_geom for g in c]
 multicam_data_flat = [d for c in multicam_data.values() for d in c]
@@ -100,9 +98,13 @@ np.save(f"markers_{POSTFIX}.npy", markers)
 rotation_0_geoms = {}
 for key, val in zip(multicam_data.keys(), multicam_geom):
     rotation_0_geoms[key] = val[0]._g.asstatic()
-np.save(f"geom_{POSTFIX}.npy", [rotation_0_geoms], allow_pickle=True)
+np.save(f"geom_{POSTFIX}.npy", [rotation_0_geoms])
 np.save(f"multicam_geom_{POSTFIX}.npy", multicam_geom)
 print("Optimalization results saved.")
+
+
+
+
 
 
 
