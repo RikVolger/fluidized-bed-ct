@@ -1,0 +1,2 @@
+# Enforce LF line endings for all text files (allow easy Windows-Unix collaboration)
+* text=auto
