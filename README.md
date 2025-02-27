@@ -8,7 +8,9 @@ scripts allow
  - reconstruction of a dynamic fluidized bed, using three angles per timestep.
 
 ## 1. Installation
-If you don't have _conda_ installed, find some installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Do **not** use the TU Delft Software Center version of anaconda.
+If you don't have _conda_ installed, find some installation instructions
+[here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). 
+Do **not** use the TU Delft Software Center version of anaconda.
 
 ### 1.1. Rapid install
 The fastest way of installing is to clone this repository and create a `conda`
@@ -22,7 +24,8 @@ repository:
 ```shell
 git clone https://github.com/RikVolger/fluidized-bed-ct.git
 ```
-You can then install the environment specified in requirements.txt as a new environment:
+You can then install the environment specified in requirements.txt as a new 
+environment:
 ```shell
 cd path/to/fluidized-bed-ct
 conda env create -f environment.yaml
@@ -43,7 +46,8 @@ conda develop .
 ### 1.2. Less rapid install
 Below the 'legacy' instructions for installation. It will potentially use newer
 versions of packages, which might or might not work.
-For an installation with _conda_ (or _mamba_, preferred), open a terminal window and run:
+For an installation with _conda_ (or _mamba_, preferred), open a terminal window
+and run:
 ```shell
 conda create -n fluidized_bed_ct python=3.10
 conda activate fluidized_bed_ct
@@ -52,30 +56,29 @@ conda install astra-toolbox -c astra-toolbox/label/dev
 pip install transforms3d
 ```
 
-In the terminal, navigate to the folder where you want to keep the code (preferably local, on the `C:` drive \[for Windows\]).
+In the terminal, navigate to the folder where you want to keep the code 
+(preferably local, on the `C:` drive \[for Windows\]).
 Then download this package:
 ```shell
 git clone https://github.com/RikVolger/fluidized-bed-ct.git
 ```
-Currently, the repositories do not contain a _setup.py_. To run a script (e.g. `some_script.py`), 
-make sure that Python finds the modules by adding the folder to _PYTHONPATH_ e.g. through `conda develop`:
+Currently, the repositories do not contain a _setup.py_. To run a script 
+(e.g. `some_script.py`), make sure that Python finds the modules by adding the 
+folder to _PYTHONPATH_ e.g. through `conda develop`:
 ```shell
 cd path/to/fluidized-bed-ct
 conda activate fluidized_bed_ct
 conda develop .
 ```
 
-The calibration relies on the _CaTE_ scripts. Install these next to `fluidized-bed-ct`:
+The calibration relies on the _CaTE_ scripts. Install these next to 
+`fluidized-bed-ct`:
 
 ```shell
 cd path/to/fluidized-bed-ct
 cd ../
 git clone https://github.com/adriaangraas/cate
 ```
-### Adapting for Windows
-If you're running the scripts from windows, in `fbrct/loader.py`, the `PROJECTION_FILE_REGEX` 
-needs to be adapted to `"camera ([1-3])\\\img_([0-9]{1,6})\.tif$"` to deal with 
-backslash folder separation in Windows
 
 ## 2. Run a calibration
 
