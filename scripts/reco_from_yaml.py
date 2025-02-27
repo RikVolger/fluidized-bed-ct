@@ -21,10 +21,10 @@ def create_empty_scan(empty_dir):
         "empty",
         DETECTOR,
         str(empty_dir),
-        proj_start=FRAMES['empty']['start'],  # TODO
-        proj_end=FRAMES['empty']['stop'],  # TODO: set higher to reduce noise levels
+        proj_start=FRAMES['empty']['start'],
+        proj_end=FRAMES['empty']['stop'],
         is_full=False,
-        is_rotational=False,  # TODO: check, the column should not rotate!
+        is_rotational=False,
         geometry=CALIBRATION_FILE,
         geometry_scaling_factor=1.0,
     )
@@ -37,10 +37,10 @@ def create_full_scan(full_dir):
         "full",  # give the scan a name
         DETECTOR,
         str(full_dir),
-        proj_start=FRAMES['full']['start'],  # TODO
-        proj_end=FRAMES['full']['stop'],  # TODO: set higher for less noise
+        proj_start=FRAMES['full']['start'],
+        proj_end=FRAMES['full']['stop'],
         is_full=True,
-        is_rotational=False,  # TODO: check, the column should not rotate!
+        is_rotational=False,
         geometry=CALIBRATION_FILE,
         geometry_scaling_factor=1.0,
     )
@@ -245,7 +245,8 @@ for day in scans['measurements']:
         full = create_full_scan(ref_paths['full'])
         # dark = create_dark_scan(ref_paths['dark'])
         if TIME == 'averaged':
-            # TODO explicitly pass start and stop frames
+            # TODO explicitly pass start and stop frames - needed for different
+            #   experiment times
             scan = create_avg_scan(exp_path)
         elif TIME == 'resolved':
             scan = create_res_scan(exp_path)
