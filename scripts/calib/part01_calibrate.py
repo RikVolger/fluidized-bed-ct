@@ -112,6 +112,7 @@ markers = marker_optimization(
 for cam in range(1, 4):
     for d1, d2 in zip(multicam_data[cam],
                       xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
+                      #xray.xray_multigeom_project({cam-1: multicam_geom[cam -1]}, markers)):
         plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
 
 markers_from_leastsquares_intersection(
