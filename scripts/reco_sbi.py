@@ -39,7 +39,7 @@ DATA_DIR = Path(
    r"U:\Xray RPT ChemE\X-ray\Xray_data\2024-05-16 Lisanne\VROI190_1320")
 CALIBRATION_FILE = str(Path(__file__).parent
                        / "calib"
-                       / "geom_pre_proc_VROI190_1320_needles_10degsec_calibrated_on_2march2025.npy")
+                       / "geom.npy")
 
  #/ "geom_table474mm_26aug2021_amend_pre_proc_3x10mm_foamballs_vertical_wall_31aug2021.npy")
 #CALIBRATION_FILE = str(DATA_DIR / "pre_proc_VROI500_1000_Cal_20degsec")
