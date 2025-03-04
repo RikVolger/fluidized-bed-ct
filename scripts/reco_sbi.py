@@ -194,25 +194,6 @@ sino = recon.load_sinogram(
 )
 
 """6. Perform a SIRT reconstruction (ASTRA Toolbox)"""
-# for sino_t in sino:  # go through timeframes one by one
-#     sino_t = np.fliplr(np.transpose(sino_t, [0, 2, 1]))
-#     plot_projs(sino_t, subplot_row=True)
-#     #plt.show()
-
-#     proj_id, proj_geom = recon.sino_gpu_and_proj_geom(sino_t, scan.geometry())
-#     vol_id, vol_geom = recon.backward(
-#         proj_id,
-#         proj_geom,
-#         algo='sirt',
-#         voxels=(200, 200, 800),  # (300, 300, 1500) for better resolution
-#         voxel_size=5.5 / 200,  # 5.5 cm / 200 voxels
-#         iters=200,
-#         min_constraint=0.0,
-#         max_constraint=1.0,
-#         col_mask=True)
-#     x = recon.volume(vol_id)
-#     recon.clear()
-
 # Bepaal de map waar alle reconstructies worden opgeslagen
 output_dir = Path(DATA_DIR) / "reconstructions"
 output_dir.mkdir(parents=True, exist_ok=True)  # Maak de map als die niet bestaat

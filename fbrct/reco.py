@@ -303,13 +303,13 @@ class AstraReconstruction(Reconstruction):
             np.array(vectors),
         )
         print("Shape of sinogram before swapaxes:", type(sinogram), getattr(sinogram, "shape", "No shape attribute"))
-        #sinogram = np.swapaxes(sinogram, 0, 1)
-        if len(sinogram.shape) == 2:
-            sinogram = np.swapaxes(sinogram, 0, 1)
-        elif len(sinogram.shape) == 3:
-             sinogram = np.swapaxes(sinogram, 1, 2)  # Probeer alternatieve aswisseling
-        else:
-            raise ValueError(f"Unexpected sinogram shape: {sinogram.shape}")
+        sinogram = np.swapaxes(sinogram, 0, 1)
+        # if len(sinogram.shape) == 2:
+        #     sinogram = np.swapaxes(sinogram, 0, 1)
+        # elif len(sinogram.shape) == 3:
+        #      sinogram = np.swapaxes(sinogram, 1, 2)  # Probeer alternatieve aswisseling
+        # else:
+        #     raise ValueError(f"Unexpected sinogram shape: {sinogram.shape}")
         proj_id = astra.data3d.create("-sino", proj_geom, sinogram)
         return proj_id, proj_geom
 
