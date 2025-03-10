@@ -54,7 +54,7 @@ full = StaticScan(  # example: a full scan that is not rotating
     DETECTOR,
     str(DATA_DIR / "pre_proc_5cm_VROI500_1000_Full_01"),
     proj_start=10,  # TODO
-    proj_end=110,  # TODO: set higher for less noise
+    proj_stop=110,  # TODO: set higher for less noise
     is_full=True,
     is_rotational=False,  # TODO: check, the column should not rotate!
     geometry=CALIBRATION_FILE,
@@ -66,7 +66,7 @@ empty = StaticScan(
     DETECTOR,
     str(DATA_DIR / "pre_proc_5cm_VROI500_1000_Empty"),
     proj_start=10,  # TODO
-    proj_end=20,  # TODO: set higher to reduce noise levels
+    proj_stop=20,  # TODO: set higher to reduce noise levels
     is_full=False,
     is_rotational=False,  # TODO: check, the column should not rotate!
     geometry=CALIBRATION_FILE,
@@ -108,7 +108,7 @@ ref_reduction = 'mode'
 
 if isinstance(ref, StaticScan):
     ref_path = ref.projs_dir
-    ref_projs = [i for i in range(ref.proj_start, ref.proj_end)]
+    ref_projs = [i for i in range(ref.proj_start, ref.proj_stop)]
     ref_rotational = ref.is_rotational
 elif isinstance(ref, FluidizedBedScan):
     ref_path = ref.projs_dir
@@ -143,7 +143,7 @@ sino = recon.load_sinogram(
     ref_projs=ref_projs,
     empty_path=empty.projs_dir,
     empty_rotational=empty.is_rotational,
-    empty_projs=[p for p in range(empty.proj_start, empty.proj_end)],
+    empty_projs=[p for p in range(empty.proj_start, empty.proj_stop)],
     # darks_ran=range(10),
     # darks_path=scan.darks_dir,
     ref_full=ref.is_full,

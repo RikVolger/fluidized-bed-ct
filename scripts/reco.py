@@ -157,7 +157,7 @@ def _sino_dynamic(
 
         ref_path = ref.projs_dir
         ref_full = ref.is_full
-        ref_projs = [i for i in range(ref.proj_start, ref.proj_end)]
+        ref_projs = [i for i in range(ref.proj_start, ref.proj_stop)]
         ref_rotational = ref.is_rotational
         if ref_reduction is None:
             ref_reduction = 'mean'
@@ -244,14 +244,14 @@ def _sino_static(
     elif not np.all([c in scan.cameras for c in cameras]):
         raise ValueError("One or more unknown cameras.")
 
-    scan_angles = range(scan.proj_start, scan.proj_end)
+    scan_angles = range(scan.proj_start, scan.proj_stop)
     if angles is None:
         angles = scan_angles
     elif not np.all([a in scan_angles for a in angles]):
         raise ValueError(
             f"One or more unknown projection angles. {scan}"
             f" has angles defined for"
-            f" {scan.proj_start}-{scan.proj_end}."
+            f" {scan.proj_start}-{scan.proj_stop}."
         )
 
     if isinstance(ref, StaticScan):
@@ -656,7 +656,7 @@ def run():
                         " one projection per angle, nothing to average."
                     )
                 assert ref_max >= 1
-                ref.proj_end = min((ref.proj_start + ref_max, ref.proj_end))
+                ref.proj_stop = min((ref.proj_start + ref_max, ref.proj_stop))
             elif isinstance(ref, FluidizedBedScan):
                 if ref.projs is None:
                     ref.projs = range(ref_max)
@@ -674,8 +674,8 @@ def run():
                         " one projection per angle, nothing to average."
                     )
                 assert ref_max >= 1
-                scan.empty.proj_end = min(
-                    (scan.empty.proj_start + ref_max, scan.empty.proj_end))
+                scan.empty.proj_stop = min(
+                    (scan.empty.proj_start + ref_max, scan.empty.proj_stop))
             else:
                 raise NotImplementedError(f"Don't know how to apply `ref_max` "
                                           f"to {scan.empty}.")

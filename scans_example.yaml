@@ -17,15 +17,22 @@ column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
 calibration_file: D:\XRay\1999-01-01 Evert\preprocessed_Rotation_needles_5degps\calibration\geom_preprocessed_Rotation_needles_5degps_again_calibrated_on_1jan1999.npy
 frames:
-- measurement:
-  - start: 10
+  measurement:
+    start: 10
     stop: 2600
-- full:
-  - start: 10
+    step: 1
+  full:
+    start: 10
     stop: 200
-- empty:
-  - start: 10
+    step: 1
+  empty:
+    start: 10
     stop: 200
+    step: 1
+  dark:
+    start: 10
+    stop: 100
+    step: 1
 # Reconstruction settings
 time: averaged
 # time: resolved
@@ -59,6 +66,25 @@ measurements:
   empty: preprocessed_Empty
   dark: preprocessed_Dark
   full: preprocessed_Full
+  # Define framerates for the measurements of this day. These overwrite the 
+  # global settings. Same frames will be used for all reconstructions this day.
+  frames:
+    empty:
+      start: 10
+      stop: 200
+      step: 1
+    dark:
+      start: 10
+      stop: 100
+      step: 1
+    full:
+      start: 10
+      stop: 200
+      step: 1
+    measurement:
+      start: 10
+      stop: 2600
+      step: 1
   reconstructions:
   - measured: preprocessed_single-bubble
   - measured: preprocessed_double-bubble
@@ -94,12 +120,16 @@ measurements:
   reconstructions:
   - measured: preprocessed_Water_10lmin
     frames:
-      start: 10
-      end: 200
+      measurement:
+        start: 10
+        stop: 200
+        step: 1
   - measured: preprocessed_Water_10lmin
     frames:
-      start: 300
-      end: 500
+      measurement:
+        start: 300
+        stop: 500
+        step: 1
   - measured: preprocessed_Water_20lmin
   - measured: preprocessed_Water_30lmin
   - measured: preprocessed_Water_40lmin

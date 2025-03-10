@@ -16,13 +16,14 @@ from scripts.pathbuilders import concpathbuilder, emptypathbuilder, fullpathbuil
 """0. Helper functions"""
 
 
-def create_empty_scan(empty_dir):
+def create_empty_scan(empty_dir, frames):
     empty = StaticScan(
         "empty",
         DETECTOR,
         str(empty_dir),
-        proj_start=FRAMES['empty']['start'],
-        proj_end=FRAMES['empty']['stop'],
+        proj_start=frames['start'],
+        proj_stop=frames['stop'],
+        proj_step=frames['step'],
         is_full=False,
         is_rotational=False,
         geometry=CALIBRATION_FILE,
@@ -32,13 +33,14 @@ def create_empty_scan(empty_dir):
     return empty
 
 
-def create_full_scan(full_dir):
+def create_full_scan(full_dir, frames):
     full = StaticScan(  # example: a full scan that is not rotating
         "full",  # give the scan a name
         DETECTOR,
         str(full_dir),
-        proj_start=FRAMES['full']['start'],
-        proj_end=FRAMES['full']['stop'],
+        proj_start=frames['start'],
+        proj_stop=frames['stop'],
+        proj_step=frames['step'],
         is_full=True,
         is_rotational=False,
         geometry=CALIBRATION_FILE,
@@ -48,13 +50,14 @@ def create_full_scan(full_dir):
     return full
 
 
-def create_avg_scan(scan_dir):
+def create_avg_scan(scan_dir, frames):
     t_avg = AveragedScan(
         scan_dir.name,
         DETECTOR,
         str(scan_dir),
-        proj_start=FRAMES['measurements']['start'],
-        proj_end=FRAMES['measurements']['stop'],
+        proj_start=frames['start'],
+        proj_stop=frames['stop'],
+        proj_step=frames['step'],
         projs_offset={1: 0, 2: 0, 3: 0},
         geometry=CALIBRATION_FILE,
         cameras=(1, 2, 3),
@@ -64,14 +67,15 @@ def create_avg_scan(scan_dir):
     return t_avg
 
 
-def create_res_scan(scan_dir):
+def create_res_scan(scan_dir, frames):
     scan = FluidizedBedScan(
         scan_dir.name,
         DETECTOR,
         str(scan_dir),
         # liter_per_min=None,  # liter per minute
-        proj_start=FRAMES['measurements']['start'],
-        proj_end=FRAMES['measurements']['stop'],
+        proj_start=frames['start'],
+        proj_stop=frames['stop'],
+        proj_step=frames['step'],
         projs_offset={1: 0, 2: 1, 3: 1},
         geometry=CALIBRATION_FILE,
         cameras=(1, 2, 3),
@@ -107,7 +111,7 @@ def reconstruct(t_avg, recon, algo, sino_t, niters, voxel_size, recon_size, mask
     return loss, x
 
 
-def find_path(key, exp_ref, day_ref, global_ref):
+def find_path(key, exp_ref, day_ref, global_ref, exp):
     if key in exp_ref.keys():
         path = Path(root, exp_ref[key])
     elif key in day_ref.keys():
@@ -117,13 +121,13 @@ def find_path(key, exp_ref, day_ref, global_ref):
     else:
         raise Exception(
             f"No {key} path provided for reconstruction of "
-            f"{experiment['measured']}"
+            f"{exp['measured']}"
         )
 
     return path
 
 
-def get_ref_paths(exp_ref, day_ref, global_ref):
+def get_ref_paths(exp_ref, day_ref, global_ref, exp):
     """find the most local path for 'empty', 'dark' and 'full' measurements
 
     Args:
@@ -137,7 +141,7 @@ def get_ref_paths(exp_ref, day_ref, global_ref):
     keys = ['empty', 'full', 'dark']
     paths = {}
     for key in keys:
-        paths[key] = find_path(key, exp_ref, day_ref, global_ref)
+        paths[key] = find_path(key, exp_ref, day_ref, global_ref, exp)
 
     return paths
 
@@ -159,9 +163,41 @@ def find_refs(src, keys=['empty', 'dark', 'full']):
     return ref_dirs
 
 
+def find_frames(src):
+    frames = {}
+    # check if frames is found at top level in src
+    if 'frames' in src.keys():
+        frames = src['frames']
+
+    return frames
+
+
+def get_frames(exp_frames, day_frames, global_frames, exp):
+    frames = {}
+    for key in ['empty', 'full', 'measurement', 'dark']:
+        if key in exp_frames.keys():
+            frames[key] = exp_frames[key]
+        elif key in day_frames.keys():
+            frames[key] = day_frames[key]
+        elif key in global_frames.keys():
+            frames[key] = global_frames[key]
+        else:
+            if key == 'dark':
+                warnings.warn("No dark frame selection provided, "
+                              "using empty frame selection instead.")
+                frames[key] = frames['empty']
+            else:
+                raise Exception(
+                    f"No {key} framerate provided for reconstruction of "
+                    f"{exp['measured']}"
+                )
+
+    return frames
+
+
 """1. Configuration of set-up and calibration"""
 # load scans.yaml
-with open("./sam_scans.yaml") as scans_yaml:
+with open("./scans_example.yaml") as scans_yaml:
     scans = yaml.safe_load(scans_yaml)
 
 PLOTTING = False
@@ -223,6 +259,7 @@ some starting frames are jittered and must be skipped.
 
 # load global 'empty', 'dark' and 'full' measurements, if provided
 global_ref = find_refs(scans)
+global_frames = find_frames(scans)
 
 # Iterate over measurement folders
 for day in scans['measurements']:
@@ -230,33 +267,35 @@ for day in scans['measurements']:
     root = day['root']
     # load day-reference measurements, if provided
     day_ref = find_refs(day)
+    day_frames = find_frames(day)
 
     # TODO Catch file not found errors, write to log file and continue.
     for experiment in day['reconstructions']:
         # load experiment-reference measurements, if provided
         exp_ref = find_refs(experiment)
+        exp_frames = find_frames(experiment)
 
-        ref_paths = get_ref_paths(exp_ref, day_ref, global_ref)
+        ref_paths = get_ref_paths(exp_ref, day_ref, global_ref, experiment)
         exp_path = Path(day['root'], experiment['measured'])
+
+        frames = get_frames(exp_frames, day_frames, global_frames, experiment)
 
         # make a choice between global and experiment-specific start and stop
 
-        empty = create_empty_scan(ref_paths['empty'])
-        full = create_full_scan(ref_paths['full'])
+        empty = create_empty_scan(ref_paths['empty'], frames['empty'])
+        full = create_full_scan(ref_paths['full'], frames['full'])
         # dark = create_dark_scan(ref_paths['dark'])
         if TIME == 'averaged':
-            # TODO explicitly pass start and stop frames - needed for different
-            #   experiment times
-            scan = create_avg_scan(exp_path)
+            scan = create_avg_scan(exp_path, frames['measurement'])
         elif TIME == 'resolved':
-            scan = create_res_scan(exp_path)
+            scan = create_res_scan(exp_path, frames['measurement'])
 
-        timeframes = range(scan.proj_start, scan.proj_end)
+        timeframes = range(scan.proj_start, scan.proj_stop, scan.proj_step)
 
         ref = full
         ref_reduction = 'median'
         ref_path = ref.projs_dir
-        ref_projs = [i for i in range(ref.proj_start, ref.proj_end)]
+        ref_projs = list(range(ref.proj_start, ref.proj_stop, ref.proj_step))
         ref_rotational = ref.is_rotational
 
         # reconstruction steps
@@ -275,7 +314,7 @@ for day in scans['measurements']:
             ref_projs=ref_projs,
             empty_path=empty.projs_dir,
             empty_rotational=empty.is_rotational,
-            empty_projs=[p for p in range(empty.proj_start, empty.proj_end)],
+            empty_projs=[p for p in range(empty.proj_start, empty.proj_stop)],
             darks_ran=range(FRAMES['dark']['start'], FRAMES['dark']['stop']),
             darks_path=ref_paths['dark'],
             ref_full=ref.is_full,
@@ -313,6 +352,8 @@ for day in scans['measurements']:
                     'iterations': NITERS,
                     'algorithm': algo,
                     'loss': loss,
+                    'time': TIME,
+                    'time_taken': toc-tic,
                 }
                 # filename = mat_filename(
                 filename = hdf5_filename(
