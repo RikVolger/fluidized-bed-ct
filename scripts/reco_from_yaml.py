@@ -4,6 +4,7 @@ import warnings
 import yaml
 import itertools
 import h5py
+import pyvista as pv
 from pathlib import Path
 import numpy as np
 import scipy.io as scio
@@ -124,7 +125,7 @@ def find_path(key, exp_ref, day_ref, global_ref):
 
 
 def get_ref_paths(exp_ref, day_ref, global_ref):
-    """find the most local path for 'empty', 'dark' and 'full' measurements
+    """find the most local path for 'empty' and 'dark' measurements
 
     Args:
         exp_ref (dict): Dictionary of experiment-specific reference paths
@@ -132,9 +133,9 @@ def get_ref_paths(exp_ref, day_ref, global_ref):
         global_ref (dict): Dictionary of global reference paths
 
     Returns:
-        dict: Most local paths for 'empty', 'full' and 'dark' measurements
+        dict: Most local paths for 'empty' and 'full'  measurements
     """
-    keys = ['empty', 'full', 'dark']
+    keys = ['empty', 'full']
     paths = {}
     for key in keys:
         paths[key] = find_path(key, exp_ref, day_ref, global_ref)
@@ -142,7 +143,7 @@ def get_ref_paths(exp_ref, day_ref, global_ref):
     return paths
 
 
-def find_refs(src, keys=['empty', 'dark', 'full']):
+def find_refs(src, keys=['empty', 'full']):
     """Find reference measurement directories for `keys` in `src`
 
     Args:
@@ -159,9 +160,10 @@ def find_refs(src, keys=['empty', 'dark', 'full']):
     return ref_dirs
 
 
+
 """1. Configuration of set-up and calibration"""
 # load scans.yaml
-with open("./sam_scans.yaml") as scans_yaml:
+with open("./oumaima_scans.yaml") as scans_yaml:
     scans = yaml.safe_load(scans_yaml)
 
 PLOTTING = False
@@ -275,8 +277,8 @@ for day in scans['measurements']:
             empty_path=empty.projs_dir,
             empty_rotational=empty.is_rotational,
             empty_projs=[p for p in range(empty.proj_start, empty.proj_end)],
-            darks_ran=range(FRAMES['dark']['start'], FRAMES['dark']['stop']),
-            darks_path=ref_paths['dark'],
+            #darks_ran=range(FRAMES['dark']['start'], FRAMES['dark']['stop']),
+            #darks_path=ref_paths['dark'],
             ref_full=ref.is_full,
             density_factor=scan.density_factor,
             col_inner_diameter=scan.col_inner_diameter,
@@ -286,55 +288,121 @@ for day in scans['measurements']:
         )
 
         algo = 'sirt'
-        for sino_t in sino:
-            for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
-                # Investigating change in recon volume doesn't add much if the mask is kept the same.
-                # Mask size is overridden in these cases.
-                if len(RECON_VOLUMES) > 1 and len(MASK_SIZES) == 1:
-                    mask_size = recon_size['side']
-                tic = time.perf_counter()
-                loss, x = reconstruct(scan, recon, algo, sino_t, NITERS,
-                                      voxel_size, recon_size, mask_size, INITIALIZATION)
-                toc = time.perf_counter()
-                print(f"Reconstructing took {toc-tic:.0f} seconds")
-                # save results in cXXX folder
-                # dataset = {
-                #     'reconstruction': x,
-                dataset_attributes = {
-                    'frames': timeframes,
-                    'volume_side': recon_size['side'],
-                    'volume_height': recon_size['height'],
-                    'voxel_size': voxel_size,
-                    'mask_size': mask_size,
-                    'scan_folder': scan.projs_dir,
-                    'empty_folder': empty.projs_dir,
-                    'full_folder': full.projs_dir,
-                    'iterations': NITERS,
-                    'algorithm': algo,
-                    'loss': loss,
-                }
-                # filename = mat_filename(
-                filename = hdf5_filename(
-                    loss=INVESTIGATING_LOSS,
-                    volume=len(RECON_VOLUMES) > 1,
-                    resolution=len(VOXEL_SIZES) > 1,
-                    mask=len(MASK_SIZES) > 1,
-                    init=INITIALIZATION,
-                    recon_size=recon_size,
-                    voxel_size=voxel_size,
-                    mask_size=mask_size)
+    
+        timeframes = range(FRAMES['measurements']['start'], FRAMES['measurements']['stop'])  
 
-                full_path = exp_path / filename
+        # Output map VTK bestanden
+        output_dir = exp_path / "vtk_output"
+        output_dir.mkdir(parents=True, exist_ok=True)  # Zorg dat de map bestaat
 
-                print(f"Saving {full_path}")
-                # scio.savemat(full_path, dataset, do_compression=True)
-                # with open(full_path, 'wb+') as pkl_file:
-                #     pickle.dump(dataset, pkl_file)
+        
+for sino_t, t in zip(sino, timeframes):  
+    print(f"Start reconstructie voor tijdstap {t}")
+    for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
+        if len(RECON_VOLUMES) > 1 and len(MASK_SIZES) == 1:
+            mask_size = recon_size['side']
+        tic = time.perf_counter()
+        loss, x = reconstruct(scan, recon, algo, sino_t, NITERS,
+                              voxel_size, recon_size, mask_size, INITIALIZATION)
 
-                with h5py.File(full_path, 'w') as h5_file:
-                    ds = h5_file.create_dataset('reconstruction', data=x, compression='gzip', compression_opts=9)
-                    ds.attrs.update(dataset_attributes)
+        toc = time.perf_counter()
+        print(f"✅ Reconstructie voor tijdstap {t} voltooid in {toc-tic:.0f} seconden")
 
-                if INVESTIGATING_LOSS and PLOTTING:
-                    plt.plot(loss)
-                    plt.show()
+        # **7. Bestandsnaam aanpassen per tijdsframe**
+        filename = hdf5_filename(
+            loss=INVESTIGATING_LOSS,
+            volume=len(RECON_VOLUMES) > 1,
+            resolution=len(VOXEL_SIZES) > 1,
+            mask=len(MASK_SIZES) > 1,
+            init=INITIALIZATION,
+            recon_size=recon_size,
+            voxel_size=voxel_size,
+            mask_size=mask_size)
+
+        full_path = exp_path / f"{filename}_t{t}"
+
+        print(f"💾 Opslaan van {full_path}")
+        with h5py.File(full_path, 'w') as h5_file:
+            ds = h5_file.create_dataset('reconstruction', data=x, compression='gzip', compression_opts=9)
+            ds.attrs.update({
+                'timeframe': t,
+                'volume_side': recon_size['side'],
+                'volume_height': recon_size['height'],
+                'voxel_size': voxel_size,
+                'mask_size': mask_size,
+                'scan_folder': scan.projs_dir,
+                'empty_folder': empty.projs_dir,
+                'full_folder': full.projs_dir,
+                'iterations': NITERS,
+                'algorithm': algo,
+                'loss': loss,
+            })
+
+        # VTK_bestand maken
+        vtk_output_path = output_dir / f"recon_{t}.vtk"
+
+
+        grid = pv.ImageData()
+        grid.dimensions = np.array(x.shape) 
+        grid.spacing = (voxel_size, voxel_size, voxel_size)  # Gebruik de correcte voxelgrootte
+        grid.point_data["Density"] = x.flatten(order="F")  # Flatten voor VTK-indeling
+        grid.save(str(vtk_output_path))
+
+        print(f" VTK-bestand voor tijdframe {t} opgeslagen als: {vtk_output_path}")
+
+
+        # for sino_t in sino:
+        #     for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
+        #         # Investigating change in recon volume doesn't add much if the mask is kept the same.
+        #         # Mask size is overridden in these cases.
+        #         if len(RECON_VOLUMES) > 1 and len(MASK_SIZES) == 1:
+        #             mask_size = recon_size['side']
+        #         tic = time.perf_counter()
+        #         loss, x = reconstruct(scan, recon, algo, sino_t, NITERS,
+        #                               voxel_size, recon_size, mask_size, INITIALIZATION)
+        #         toc = time.perf_counter()
+        #         print(f"Reconstructing took {toc-tic:.0f} seconds")
+        #         # save results in cXXX folder
+        #         # dataset = {
+        #         #     'reconstruction': x,
+        #         dataset_attributes = {
+        #             'frames': timeframes,
+        #             'volume_side': recon_size['side'],
+        #             'volume_height': recon_size['height'],
+        #             'voxel_size': voxel_size,
+        #             'mask_size': mask_size,
+        #             'scan_folder': scan.projs_dir,
+        #             'empty_folder': empty.projs_dir,
+        #             'full_folder': full.projs_dir,
+        #             'iterations': NITERS,
+        #             'algorithm': algo,
+        #             'loss': loss,
+        #         }
+        #         # filename = mat_filename(
+        #         filename = hdf5_filename(
+        #             loss=INVESTIGATING_LOSS,
+        #             volume=len(RECON_VOLUMES) > 1,
+        #             resolution=len(VOXEL_SIZES) > 1,
+        #             mask=len(MASK_SIZES) > 1,
+        #             init=INITIALIZATION,
+        #             recon_size=recon_size,
+        #             voxel_size=voxel_size,
+        #             mask_size=mask_size)
+
+        #         full_path = exp_path / filename
+
+        #         print(f"Saving {full_path}")
+        #         # scio.savemat(full_path, dataset, do_compression=True)
+        #         # with open(full_path, 'wb+') as pkl_file:
+        #         #     pickle.dump(dataset, pkl_file)
+
+        #         with h5py.File(full_path, 'w') as h5_file:
+        #             ds = h5_file.create_dataset('reconstruction', data=x, compression='gzip', compression_opts=9)
+        #             ds.attrs.update(dataset_attributes)
+
+                
+                
+
+        #         if INVESTIGATING_LOSS and PLOTTING:
+        #             plt.plot(loss)
+        #             plt.show()

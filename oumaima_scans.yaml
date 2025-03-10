@@ -1,0 +1,66 @@
+# Detector specs (shouldn't change)
+detector_cols_spec: 1548      # also those outside ROI
+detector_rows_spec: 1524      # also those outside ROI
+detector_width_spec: 30.7     # cm, also outside ROI
+detector_height_spec: 30.2    # cm, also outside ROI
+detector_pixel_spec: 0.0198   # cm
+# Setup properties (Measurements & Settings)
+# Expected to be the same for all measurements. If you change these half-way, 
+# you'll have to make a new yaml for the second part. If you want to change them
+# throughout your experiments, you'll have to rework the codebase a bit.
+source_radius: 95
+detector_radius: 30
+detector_cols: 1130          # including ROI
+detector_rows: 1548           # including ROI
+column_inner_diameter: 14.2   # cm
+column_outer_diameter: 15.0   # cm
+calibration_file: "U:\\Xray RPT ChemE\\X-ray\\Xray_data\\2024-05-16 Lisanne\\VROI190_1320\\calib\
+  \\pre_proc_VROI190_1320_needles_10degsec\\geom.npy"
+
+frames:
+  measurements:
+    start: 50
+    stop: 55
+  full:
+    start: 50
+    stop: 200
+  empty:
+    start: 50
+    stop: 200
+  dark:
+    start: 50
+    stop: 200
+
+# Reconstruction settings
+time: resolved
+
+# Reconstruction settings
+number_of_iterations: 50
+investigate_loss: False
+beam_hardening_correction: False
+recon_volumes:  # in cm
+- side: 15
+  height: 20
+voxel_sizes:
+- 0.03
+mask_sizes:
+- 15
+initialize: flat  # 'flat', 'ones' or 'parabolic'
+# Measurements to reconstruct
+#############
+# If the same 'empty', 'dark', or 'full' can be used for all reconstructions:
+# Provide absolute paths here. These will be referred to in the next comments as
+# 'global paths'. They are overwritten if an experiment also has a day-path or
+# experiment-specific 'empty', 'dark' or 'full' measurement
+# empty: D:\XRay\1999-01-01 Evert\preprocessed_Empty
+#dark: D:\XRay\2024-11-25 Rik en Sam\preprocessed_dark
+# full: D:\Xray\1999-01-01 Evert\preprocessed_Full
+# Per folder with measurements, which measurements to reconstruct
+measurements:
+- day: 16-05-2024
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\2024-05-16 Lisanne\VROI190_1320
+  empty: pre_proc_VROI190_1320_Empty_10degsec
+  reconstructions:
+  - measured: pre_proc_VROI190_1320_phantoms_10degsec
+    full: pre_proc_VROI190_1320_Full_10degsec
+
