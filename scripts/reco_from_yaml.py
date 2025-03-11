@@ -1,4 +1,3 @@
-import pickle
 import time
 import warnings
 import yaml
@@ -6,12 +5,12 @@ import itertools
 import h5py
 from pathlib import Path
 import numpy as np
-import scipy.io as scio
+import pyvista as pv
 from matplotlib import pyplot as plt
 
 from fbrct import loader, reco, StaticScan, AveragedScan
 from fbrct.scan import FluidizedBedScan
-from scripts.pathbuilders import concpathbuilder, emptypathbuilder, fullpathbuilder, hdf5_filename, mat_filename, pkl_filename
+from scripts.pathbuilders import vtk_filename
 
 """0. Helper functions"""
 
@@ -326,7 +325,15 @@ for day in scans['measurements']:
         )
 
         algo = 'sirt'
-        for sino_t in sino:
+        for i, sino_t in enumerate(sino):
+            if time == "resolved":
+                frame = str(scan.proj_start + i)
+            elif time == "averaged":
+                frame = f"{scan.proj_start} - {scan.proj_stop}"
+            else:
+                frame = "???"
+                warnings.warn("Time can either be 'resolved' or 'averaged', "
+                              "not whatever you chose. Redo your yaml file.")
             for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
                 # Investigating change in recon volume doesn't add much if the mask is kept the same.
                 # Mask size is overridden in these cases.
@@ -337,9 +344,7 @@ for day in scans['measurements']:
                                       voxel_size, recon_size, mask_size, INITIALIZATION)
                 toc = time.perf_counter()
                 print(f"Reconstructing took {toc-tic:.0f} seconds")
-                # save results in cXXX folder
-                # dataset = {
-                #     'reconstruction': x,
+
                 dataset_attributes = {
                     'frames': timeframes,
                     'volume_side': recon_size['side'],
@@ -353,10 +358,11 @@ for day in scans['measurements']:
                     'algorithm': algo,
                     'loss': loss,
                     'time': TIME,
+                    'frame': frame,
                     'time_taken': toc-tic,
                 }
-                # filename = mat_filename(
-                filename = hdf5_filename(
+
+                filename = vtk_filename(
                     loss=INVESTIGATING_LOSS,
                     volume=len(RECON_VOLUMES) > 1,
                     resolution=len(VOXEL_SIZES) > 1,
@@ -364,18 +370,23 @@ for day in scans['measurements']:
                     init=INITIALIZATION,
                     recon_size=recon_size,
                     voxel_size=voxel_size,
-                    mask_size=mask_size)
+                    mask_size=mask_size,
+                    time=TIME,
+                    frame=frame)
 
-                full_path = exp_path / filename
+                output_path = Path(day['root'], 'reconstructions', experiment['measured'])
+                full_path = output_path / filename
 
-                print(f"Saving {full_path}")
-                # scio.savemat(full_path, dataset, do_compression=True)
-                # with open(full_path, 'wb+') as pkl_file:
-                #     pickle.dump(dataset, pkl_file)
+                grid = pv.ImageData()
+                grid.dimensions = np.array(x.shape)
+                grid.spacing = (voxel_size, voxel_size, voxel_size)
+                grid.point_data["Density"] = x.flatten(order="F")
+                # Save all the metadata as user dict
+                grid.user_dict = dataset_attributes
 
-                with h5py.File(full_path, 'w') as h5_file:
-                    ds = h5_file.create_dataset('reconstruction', data=x, compression='gzip', compression_opts=9)
-                    ds.attrs.update(dataset_attributes)
+                print(f"Saving {full_path}\n...")
+
+                grid.save(str(full_path))
 
                 if INVESTIGATING_LOSS and PLOTTING:
                     plt.plot(loss)
