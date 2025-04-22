@@ -249,28 +249,28 @@ for day in scans['measurements']:
         ref_path = ref.projs_dir
         ref_projs = [i for i in range(ref.proj_start, ref.proj_end)]
         ref_rotational = ref.is_rotational
-
+        print('check')
         # reconstruction steps
         assert np.all(
             [t in loader.projection_numbers(t_avg.projs_dir) for t in timeframes])
         recon = reco.AstraReconstruction(
             t_avg.projs_dir,
             detector=t_avg.detector)
-
+        print('check2')
         sino = recon.load_sinogram(
             t_range=timeframes,
             t_offsets=t_avg.projs_offset,
             ref_rotational=ref_rotational,
             ref_reduction=ref_reduction,
-            ref_path=ref_path,
-            ref_projs=ref_projs,
+            ref_path= ref_path, # change to None results in error
+            ref_projs=None, #ref_projs, # change to None gives might give correct results? all values go towards 0
             empty_path=empty.projs_dir,
             empty_rotational=empty.is_rotational,
             empty_projs=[p for p in range(empty.proj_start, empty.proj_end)],
             darks_ran=range(FRAMES['dark']['start'], FRAMES['dark']['stop']),
-            darks_path=ref_paths['dark'],
-            ref_full=ref.is_full,
-            density_factor=t_avg.density_factor,
+            darks_path=None, #ref_paths['dark'],
+            ref_full=ref.is_full, # change to None does results in 1 color image for 0lmin
+            density_factor= t_avg.density_factor, # Set None does something but not good result
             col_inner_diameter=t_avg.col_inner_diameter,
             # scatter_mean_full=600,
             # scatter_mean_empty=500,

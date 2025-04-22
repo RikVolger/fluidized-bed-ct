@@ -12,7 +12,7 @@ source_radius: 88.5
 detector_radius: 32.1
 detector_cols: 1548           # including ROI
 detector_rows: 1524           # including ROI
-column_inner_diameter: 19.2   # cm
+column_inner_diameter: 19 #.2   # cm
 column_outer_diameter: 20.0   # cm
 calibration_file: "D:\\XRay\\2024-11-14 Rik en Sam\
   \\preprocessed_Rotation_needles_5degps_again\\calibration\
@@ -20,25 +20,25 @@ calibration_file: "D:\\XRay\\2024-11-14 Rik en Sam\
 frames:
   measurements:
     start: 50
-    stop: 2600
+    stop: 169 #2589 #2600
   full:
     start: 50
-    stop: 200
+    stop: 169 #200
   empty:
     start: 50
-    stop: 200
+    stop: 169 #200
   dark:
     start: 50
     stop: 200
 # Reconstruction settings
-number_of_iterations: 200
+number_of_iterations: 15 #200
 investigate_loss: False
 beam_hardening_correction: False
 recon_volumes:  # in cm
 - side: 21
   height: 15
 voxel_sizes:
-- 0.03
+- 0.03 # 0.03
 mask_sizes:
 - 20
 initialize: flat  # 'flat', 'ones' or 'parabolic'
@@ -49,16 +49,29 @@ initialize: flat  # 'flat', 'ones' or 'parabolic'
 # 'global paths'. They are overwritten if an experiment also has a day-path or
 # experiment-specific 'empty', 'dark' or 'full' measurement
 # empty: D:\XRay\1999-01-01 Evert\preprocessed_Empty
-dark: D:\XRay\2024-11-25 Rik en Sam\preprocessed_dark
+dark: None # D:\XRay\2024-11-25 Rik en Sam\preprocessed_dark
 # full: D:\Xray\1999-01-01 Evert\preprocessed_Full
 # Per folder with measurements, which measurements to reconstruct
 measurements:
 - day: 27-11-2024
-  root: D:\XRay\2024-11-27 Rik en Sam
-  empty: BHC2_empty
-  reconstructions:
-  - measured: BHC2_IPA_00gl_80lmin
-    full: BHC2_IPA_00gl_0lmin
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\2024-11-27 Rik en Sam #D:\XRay\2024-11-27 Rik en Sam again
+  empty: empty
+  reconstructions: # 0: scattercorrected, prepro
+  - measured: IPA_00gl_0lmin
+    full: IPA_00gl_0lmin
+  # - measured: preprocessed_IPA_03gl_0lmin
+  #   full: preprocessed_IPA_03gl_0lmin
+  # - measured: preprocessed_IPA_09gl_0lmin
+  #   full: preprocessed_IPA_09gl_0lmin
+  # - measured: preprocessed_IPA_12gl_0lmin
+  #   full: preprocessed_IPA_12gl_0lmin
+  # - measured: preprocessed_IPA_19gl_0lmin
+  #   full: preprocessed_IPA_19gl_0lmin
+  # - measured: preprocessed_IPA_22gl_0lmin
+  #   full: preprocessed_IPA_22gl_0lmin
+  # - measured: preprocessed_IPA_40gl_0lmin
+  #   full: preprocessed_IPA_40gl_0lmin
+
 #   - measured: preprocessed_PrOH_03gl_80lmin
 #     full: preprocessed_PrOH_03gl_0lmin
 #   - measured: preprocessed_PrOH_06gl_80lmin
