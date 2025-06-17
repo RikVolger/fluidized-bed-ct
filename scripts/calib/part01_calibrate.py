@@ -106,7 +106,7 @@ markers = marker_optimization(
     multicam_data_flat,
     plot=False,
     max_nfev=20,
-    nr_iters=4
+    nr_iters=2
 )
 
 for cam in range(1, 4):

@@ -96,28 +96,28 @@ containing the actual images (e.g. `Rotation_needles_5degps_again`).
    necessary.
    Sometimes markers are barely visible in the column walls. That is fine, just
    make a guess.
-2. The function `annotated_data()` helps quickly selecting marker points in the
-   images. 
-   The tool is a bit rudimental, but should get the job done. If 
-   `open_annotation`
-   is `True` the tool annotates, if it is `False`, the tool returns previously
-   annotated values. The function creates some NumPy files in the background
-   to store the annotations. These are stored next to your raw data, in a folder 
-   `calib`
-3. The script then builds a triangular geometry and uses that as an initial
-   guess for the set-up. The parametrization is that of a static set-up with
-   three sources and detectors that undergoes fixed rotations along a single
-   axis. The geometry with unknown parameters is stored in `multicam_geom`.
-4. Then a function called `marker_optimization()` takes the geometries, and
-   looks to find their parameters. This uses the _CaTE_ machinery to convert
-   the geometry to a list of values that can be optimized with the nonlinear
-   least-squares solver from SciPy. To find initial values for the markers,
-   the annotated markers are found using a least-squares intersection in the
-   3D volume. If `plot=True` is passed, a plot will show the positions of
-   the markers with their lines of projection. This should show how good/bad 
-   the current solution is.  The CaTE geometries are stored in a file `geom.npy`
-   afterward, in the `calib` folder.
-   The found marker positions are also stored, but only for later convenience.
+2. The actual calibration is done in the script `part01_calibrate.py`. When you 
+   run the script, a couple things happen:
+   1. The function `annotated_data()` helps quickly selecting marker points 
+      in the images. The tool is a bit rudimental, but should get the job done.
+   2. If `open_annotation` is `True` the tool annotates, if it is `False`, the 
+      tool returns previously annotated values. The function creates some NumPy 
+      files in the background to store the annotations. These are stored next to 
+      your raw data, in a folder `calib`.
+   3. The script then builds a triangular geometry and uses that as an initial
+      guess for the set-up. The parametrization is that of a static set-up with
+      three sources and detectors that undergoes fixed rotations along a single
+      axis. The geometry with unknown parameters is stored in `multicam_geom`.
+   4. Then a function called `marker_optimization()` takes the geometries, and
+      looks to find their parameters. This uses the _CaTE_ machinery to convert
+      the geometry to a list of values that can be optimized with the nonlinear
+      least-squares solver from SciPy. To find initial values for the markers,
+      the annotated markers are found using a least-squares intersection in the
+      3D volume. If `plot=True` is passed, a plot will show the positions of
+      the markers with their lines of projection. This should show how good/bad 
+      the current solution is.  The CaTE geometries are stored in a file
+      `geom.npy` afterward, in the `calib` folder. The found marker positions 
+      are also stored, but only for later convenience.
 
 The (optional, but recommended) script _part02_test_recon.py_ is to help figure
 out how accurate the reconstruction is. The projections from the marker scan be
