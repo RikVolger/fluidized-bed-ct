@@ -11,8 +11,8 @@ from tifffile import tifffile
 import imageio
 from tqdm import tqdm
 
-# TODO Update files to use pathlib.Path instead of regex - is more flexible
-PROJECTION_FILE_REGEX = "camera ([1-3])\\\img_([0-9]{1,6})\.tif$"
+PROJECTION_FILE_REGEX = os.sep.join(["camera ([1-3])",
+                                     "img_([0-9]{1,6})\.tif$"])
 
 # we use joblibs `Memory` to cache long results
 path = pathlib.Path(__file__).parent.resolve()

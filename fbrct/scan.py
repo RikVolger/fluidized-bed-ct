@@ -170,9 +170,6 @@ class Scan(ABC):
         darks=None,
         empty=None,
         is_rotational: bool = False,
-        # TODO 'Rotated' is ambiguous. Perhaps change to 'cropping dimension' with
-        # value 'height' or 'width'
-        cams_are_rotated: bool = False,
         is_full: bool = False,
         col_inner_diameter: float = None,
         density_factor: float = None
@@ -198,7 +195,6 @@ class Scan(ABC):
         self.projs_offset = projs_offset
         self.col_inner_diameter = col_inner_diameter
         self.density_factor = density_factor
-        self.cams_are_rotated = cams_are_rotated
 
     def add_phantom(self, phantom: Phantom):
         self.phantoms.append(phantom)
@@ -224,18 +220,20 @@ class StaticScan(Scan):
         self,
         *args,
         proj_start: int,
-        proj_end: int,
+        proj_stop: int,
+        proj_step: int = 1,
         **kwargs,
     ):
-        assert proj_end > proj_start > 0
+        assert proj_stop > proj_start > 0
         self.proj_start = proj_start
-        self.proj_end = proj_end
-        projs = list(range(proj_start, proj_end))
+        self.proj_stop = proj_stop
+        self.proj_step = proj_step
+        projs = list(range(proj_start, proj_stop, proj_step))
         super().__init__(*args, projs, **kwargs)
 
     @property
     def nr_projs(self):
-        return self.proj_end - self.proj_start
+        return self.proj_stop - self.proj_start
 
     def geometry(self):
         if self._geometry_manual is True:
@@ -279,13 +277,15 @@ class AveragedScan(Scan):
         detector,
         projs_dir,
         proj_start: int,
-        proj_end: int,
+        proj_stop: int,
+        proj_step: int = 1,
         **kwargs,
     ):
-        assert proj_end > proj_start > 0
+        assert proj_stop > proj_start > 0
         self.proj_start = proj_start
-        self.proj_end = proj_end
-        projs = list(range(proj_start, proj_end))
+        self.proj_stop = proj_stop
+        self.proj_step = proj_step
+        projs = list(range(proj_start, proj_stop, proj_step))
         super().__init__(name, detector, projs_dir, projs, **kwargs)
 
     def geometry(self):
@@ -317,7 +317,8 @@ class FluidizedBedScan(DynamicScan):
                  detector,
                  projs_dir,
                  proj_start: int,
-                 proj_end: int,
+                 proj_stop: int,
+                 proj_step: int = 1,
                  liter_per_min=None,
                  **kwargs):
         self.liter_per_min = liter_per_min
@@ -328,9 +329,10 @@ class FluidizedBedScan(DynamicScan):
         kwargs['is_full'] = True
         kwargs['is_rotational'] = False
 
-        assert proj_end > proj_start > 0
+        assert proj_stop > proj_start > 0
         self.proj_start = proj_start
-        self.proj_end = proj_end
-        projs = list(range(proj_start, proj_end))
+        self.proj_stop = proj_stop
+        self.proj_step = proj_step
+        projs = list(range(proj_start, proj_stop, proj_step))
 
         super().__init__(name, detector, projs_dir, projs, **kwargs)
