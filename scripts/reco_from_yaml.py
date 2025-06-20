@@ -2,7 +2,7 @@ import time
 import warnings
 import yaml
 import itertools
-import h5py
+# import h5py
 from pathlib import Path
 import numpy as np
 import pyvista as pv
