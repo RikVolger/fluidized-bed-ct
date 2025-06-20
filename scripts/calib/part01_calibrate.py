@@ -58,7 +58,7 @@ for t in t_annotated:
 
 
 """ 2. Annotate the projections, for a description of markers, see `util.py`"""
-res_path = Path(root / "calib" / calib_folder)
+res_path = Path(root.parent / "calib" / calib_folder)
 if not res_path.is_dir():
     res_path.mkdir(
         parents=True,       # Also make _all_ parent folders (no safety checks)
