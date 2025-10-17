@@ -299,8 +299,8 @@ for day in scans['measurements']:
         ref_rotational = ref.is_rotational
 
         # reconstruction steps
-        assert np.all(
-            [t in loader.projection_numbers(scan.projs_dir) for t in timeframes])
+        # assert np.all(
+        #     [t in loader.projection_numbers(scan.projs_dir) for t in timeframes])
         recon = reco.AstraReconstruction(
             scan.projs_dir,
             detector=scan.detector)
@@ -315,8 +315,8 @@ for day in scans['measurements']:
             empty_path=empty.projs_dir,
             empty_rotational=empty.is_rotational,
             empty_projs=[p for p in range(empty.proj_start, empty.proj_stop)],
-            darks_ran=range(FRAMES['dark']['start'], FRAMES['dark']['stop']),
-            darks_path=ref_paths['dark'],
+            # darks_ran=range(frames['dark']['start'], frames['dark']['stop']),
+            # darks_path=ref_paths['dark'],
             ref_full=ref.is_full,
             density_factor=scan.density_factor,
             col_inner_diameter=scan.col_inner_diameter,
@@ -326,7 +326,15 @@ for day in scans['measurements']:
         )
 
         algo = 'sirt'
-        for sino_t in sino:
+        for i, sino_t in enumerate(sino):
+            if TIME == "resolved":
+                frame = str(scan.proj_start + i)
+            elif TIME == "averaged":
+                frame = f"{scan.proj_start} - {scan.proj_stop}"
+            else:
+                frame = "???"
+                warnings.warn("Time can either be 'resolved' or 'averaged', "
+                              "not whatever you chose. Redo your yaml file.")
             for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
                 # Investigating change in recon volume doesn't add much if the mask is kept the same.
                 # Mask size is overridden in these cases.
@@ -341,7 +349,7 @@ for day in scans['measurements']:
                 # dataset = {
                 #     'reconstruction': x,
                 dataset_attributes = {
-                    'frames': timeframes,
+                    'frames': list(timeframes),
                     'volume_side': recon_size['side'],
                     'volume_height': recon_size['height'],
                     'voxel_size': voxel_size,
@@ -351,7 +359,7 @@ for day in scans['measurements']:
                     'full_folder': full.projs_dir,
                     'iterations': NITERS,
                     'algorithm': algo,
-                    'loss': loss,
+                    'loss': list(loss),
                     'time': TIME,
                     'time_taken': toc-tic,
                 }
@@ -366,7 +374,9 @@ for day in scans['measurements']:
                     voxel_size=voxel_size,
                     mask_size=mask_size)
 
-                full_path = exp_path / filename
+                output_path = Path(day['root']).parent / f"10_reconstructions/{experiment['measured']}"
+                output_path.mkdir(parents=True, exist_ok=True)
+                full_path = output_path / filename
 
                 print(f"Saving {full_path}")
                 # scio.savemat(full_path, dataset, do_compression=True)

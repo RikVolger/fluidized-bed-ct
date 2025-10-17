@@ -4,6 +4,7 @@ import pathlib
 import re
 import warnings
 from typing import Sequence
+from pathlib import Path
 from joblib import Memory
 
 import numpy as np
@@ -51,6 +52,28 @@ def _collect_fnames(
     return results, results_filenames
 
 
+def _find_average(path, cameras):
+    if not os.path.exists(path):
+        raise IOError(f"The path to {path} does not seem to exist.")
+
+    if not isinstance(path, Path):
+        path = Path(path)
+
+    for i, cam in enumerate(cameras):
+        camavg = path / f"camera {cam}/average.tif"
+        if not camavg.exists():
+            return False
+
+    tmp = tifffile.imread(path / f"camera {cameras[0]}/average.tif")
+    avg = np.zeros((1, len(cameras), *tmp.shape))
+
+    for i, cam in enumerate(cameras):
+        camavg = path / f"camera {cam}/average.tif"
+        avg[0, i] = tifffile.imread(camavg, maxworkers=1)
+
+    return avg
+
+
 def roughly_equal(n1, n2, play=100):
     """Determine if n1 and n2 are roughly equal - within an absolute margin (play)"""
     n2_min = n2 - play
@@ -70,6 +93,11 @@ def load(
     average: bool = False,
 ):
     """Load a stack of data from disk using a pattern."""
+    # if time averaged and there is an average.tif, load that and be done
+    if average:
+        ims = _find_average(path, cameras)
+        if ims is not False:
+            return ims
 
     results, results_filenames = _collect_fnames(path, regex)
     # Check the results for continuity in the subsequences range

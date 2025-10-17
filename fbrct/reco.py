@@ -197,7 +197,7 @@ class Reconstruction:
         if time == "averaged":
             load_kwargs["average"] = True
         elif time == "resolved":
-            load_kwargs["average"] = False            
+            load_kwargs["average"] = False
 
         dark = None
         if darks_path is not None:
