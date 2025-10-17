@@ -17,15 +17,18 @@ column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
 calibration_file: u:\Xray RPT ChemE\X-ray\Xray_data\2025-06-13 Rik Cropper\calib\NeedleCalibration_5degps\geom.npy
 frames:
-- measurement:
-  - start: 50
+  measurement:
+    start: 50
     stop: 1300
-- full:
-  - start: 50
+    step: 1
+  full:
+    start: 50
     stop: 240
-- empty:
-  - start: 50
+    step: 1
+  empty:
+    start: 50
     stop: 240
+    step: 1
 # Reconstruction settings
 time: averaged
 # time: resolved

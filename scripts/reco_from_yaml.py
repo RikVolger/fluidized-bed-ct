@@ -298,8 +298,8 @@ for day in scans['measurements']:
         ref_rotational = ref.is_rotational
 
         # reconstruction steps
-        assert np.all(
-            [t in loader.projection_numbers(scan.projs_dir) for t in timeframes])
+        # assert np.all(
+        #     [t in loader.projection_numbers(scan.projs_dir) for t in timeframes])
         recon = reco.AstraReconstruction(
             scan.projs_dir,
             detector=scan.detector)
@@ -314,8 +314,8 @@ for day in scans['measurements']:
             empty_path=empty.projs_dir,
             empty_rotational=empty.is_rotational,
             empty_projs=[p for p in range(empty.proj_start, empty.proj_stop)],
-            darks_ran=range(FRAMES['dark']['start'], FRAMES['dark']['stop']),
-            darks_path=ref_paths['dark'],
+            # darks_ran=range(frames['dark']['start'], frames['dark']['stop']),
+            # darks_path=ref_paths['dark'],
             ref_full=ref.is_full,
             density_factor=scan.density_factor,
             col_inner_diameter=scan.col_inner_diameter,
@@ -326,9 +326,9 @@ for day in scans['measurements']:
 
         algo = 'sirt'
         for i, sino_t in enumerate(sino):
-            if time == "resolved":
+            if TIME == "resolved":
                 frame = str(scan.proj_start + i)
-            elif time == "averaged":
+            elif TIME == "averaged":
                 frame = f"{scan.proj_start} - {scan.proj_stop}"
             else:
                 frame = "???"
@@ -346,7 +346,7 @@ for day in scans['measurements']:
                 print(f"Reconstructing took {toc-tic:.0f} seconds")
 
                 dataset_attributes = {
-                    'frames': timeframes,
+                    'frames': list(timeframes),
                     'volume_side': recon_size['side'],
                     'volume_height': recon_size['height'],
                     'voxel_size': voxel_size,
@@ -356,7 +356,7 @@ for day in scans['measurements']:
                     'full_folder': full.projs_dir,
                     'iterations': NITERS,
                     'algorithm': algo,
-                    'loss': loss,
+                    'loss': list(loss),
                     'time': TIME,
                     'frame': frame,
                     'time_taken': toc-tic,
@@ -374,7 +374,8 @@ for day in scans['measurements']:
                     time=TIME,
                     frame=frame)
 
-                output_path = Path(day['root'], 'reconstructions', experiment['measured'])
+                output_path = Path(day['root']).parent / f"10_reconstructions/{experiment['measured']}"
+                output_path.mkdir(parents=True, exist_ok=True)
                 full_path = output_path / filename
 
                 grid = pv.ImageData()
