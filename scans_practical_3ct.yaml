@@ -1,0 +1,157 @@
+# Detector specs (shouldn't change)
+detector_cols_spec: 1548      # also those outside ROI
+detector_rows_spec: 1524      # also those outside ROI
+detector_width_spec: 30.7     # cm, also outside ROI
+detector_height_spec: 30.2    # cm, also outside ROI
+detector_pixel_spec: 0.0198   # cm
+
+# Setup properties (Measurements & Settings)
+# Expected to be the same for all measurements. If you change these half-way, 
+# you'll have to make a new yaml for the second part. If you want to change them
+# throughout your experiments, you'll have to rework the codebase a bit.
+source_radius: 88.5 
+detector_radius: 32.1
+detector_cols: 1548           # including ROI
+detector_rows: 1524           # including ROI
+column_inner_diameter: 19.2   # cm
+column_outer_diameter: 20.0   # cm
+calibration_file: U:\Xray RPT ChemE\X-ray\Xray_data\2025-06-13 Rik Cropper\calib\NeedleCalibration_5degps\geom_preprocessed_Rotation_needles_5degps_again_calibrated_on_1jan1999.npy
+frames:
+  measurement:
+    start: 10
+    stop: 1300
+    step: 1
+  full:
+    start: 10
+    stop: 240
+    step: 1
+  empty:
+    start: 10
+    stop: 240
+    step: 1
+  dark:
+    start: 10
+    stop: 100
+    step: 1
+# Reconstruction settings
+time: averaged
+# time: resolved
+number_of_iterations: 20
+investigate_loss: False
+recon_volumes:  # in cm
+- side: 21
+  height: 15
+voxel_sizes:
+- 0.03
+mask_sizes:
+- 20
+initialize: flat  # 'flat', 'ones' or 'parabolic'
+# Measurements to reconstruct
+#############
+# If the same 'empty', 'dark', or 'full' can be used for all reconstructions:
+# Provide absolute paths here. These will be referred to in the next comments as
+# 'global paths'. They are overwritten if an experiment also has a day-path or
+# experiment-specific 'empty', 'dark' or 'full' measurement
+# empty: D:\XRay\1999-01-01 Evert\preprocessed_Empty
+# dark: D:\Xray\1999-01-01 Evert\preprocessed_Dark
+# full: D:\Xray\1999-01-01 Evert\preprocessed_Full
+# Per folder with measurements, which measurements to reconstruct
+measurements:
+# 120 kV series, 135 kV series, 150 kV series.
+# For each of those, SC series and non-SC series. 6 total entries.
+# 120kV, non-SC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_30lmin_120kV_22Hz
+    full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Empty_120kV_22Hz
+  - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_80lmin_120kV_22Hz
+    full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Empty_120kV_22Hz
+  - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_100lmin_120kV_22Hz
+    full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_120kV_22Hz
+  - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_150lmin_120kV_22Hz
+    full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_120kV_22Hz
+# 120kV, SC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_30lmin_120kV_22Hz
+    full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Empty_120kV_22Hz
+  - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_80lmin_120kV_22Hz
+    full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Empty_120kV_22Hz
+  - measured: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_100lmin_120kV_22Hz
+    full: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Empty_120kV_22Hz
+  - measured: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_150lmin_120kV_22Hz
+    full: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Empty_120kV_22Hz
+# 135kV, non-SC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_30lmin_135kV_22Hz
+    full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Empty_135kV_22Hz
+  - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_80lmin_135kV_22Hz
+    full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Empty_135kV_22Hz
+  - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_100lmin_135kV_22Hz
+    full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_135kV_22Hz
+  - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_150lmin_135kV_22Hz
+    full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_135kV_22Hz
+# 135kV, SC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_30lmin_135kV_22Hz
+    full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Empty_135kV_22Hz
+  - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_80lmin_135kV_22Hz
+    full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Empty_135kV_22Hz
+  - measured: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_100lmin_135kV_22Hz
+    full: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Empty_135kV_22Hz
+  - measured: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_150lmin_135kV_22Hz
+    full: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Empty_135kV_22Hz
+# 150kV, non-SC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_30lmin_150kV_22Hz
+    full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
+  - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_80lmin_150kV_22Hz
+    full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
+  - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_100lmin_150kV_22Hz
+    full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
+  - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_150lmin_150kV_22Hz
+    full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
+# 150kV, SC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_30lmin_150kV_22Hz
+    full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Empty_150kV_22Hz
+  - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_80lmin_150kV_22Hz
+    full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Empty_150kV_22Hz
+  - measured: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_100lmin_150kV_22Hz
+    full: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Empty_150kV_22Hz
+  - measured: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_150lmin_150kV_22Hz
+    full: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Empty_150kV_22Hz
