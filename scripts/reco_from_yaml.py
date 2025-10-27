@@ -197,7 +197,7 @@ def get_frames(exp_frames, day_frames, global_frames, exp):
 
 """1. Configuration of set-up and calibration"""
 # load scans.yaml
-with open("./scans_example.yaml") as scans_yaml:
+with open("./scans_practical_3ct.yaml") as scans_yaml:
     scans = yaml.safe_load(scans_yaml)
 
 PLOTTING = False
