@@ -138,7 +138,7 @@ def load(
 
     # check if wanted timesteps are in the dict, and load them
     count = 0
-    for t_i, t in enumerate(tqdm(time_range)) if verbose else enumerate(
+    for t_i, t in enumerate(tqdm(time_range, desc=path)) if verbose else enumerate(
             time_range):
         # print(t)
         for d_i, d in enumerate(detector_timesteps.keys()):
@@ -147,8 +147,8 @@ def load(
                     f"Could not find timestep {t} from "
                     f"detector {d} in directory {path}."
                 )
-            if verbose:
-                tqdm.write(f"Reading {detector_timesteps[d][t]}")
+            # if verbose:
+            #     tqdm.write(f"Reading {detector_timesteps[d][t]}")
             if average:
                 ims[0, d_i, rows] += tifffile.imread(detector_timesteps[d][t],
                                                      maxworkers=1)[detector_rows][0]
