@@ -333,8 +333,8 @@ for day in scans['measurements']:
                 frame = f"{scan.proj_start} - {scan.proj_stop}"
             else:
                 frame = "???"
-                warnings.warn("Time can either be 'resolved' or 'averaged', "
-                              "not whatever you chose. Redo your yaml file.")
+                raise ValueError("Time can either be 'resolved' or 'averaged', "
+                                 "not whatever you chose. Redo your yaml file.")
             for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
                 # Investigating change in recon volume doesn't add much if the mask is kept the same.
                 # Mask size is overridden in these cases.
