@@ -51,7 +51,7 @@ and run:
 ```shell
 conda create -n fluidized_bed_ct python=3.10
 conda activate fluidized_bed_ct
-conda install numpy scipy imageio matplotlib joblib tqdm pyqtgraph conda-build transforms3d tifffile -c conda-forge
+conda install numpy scipy imageio matplotlib joblib tqdm pyqtgraph conda-build transforms3d tifffile pyvista -c conda-forge
 conda install astra-toolbox -c astra-toolbox/label/dev
 pip install transforms3d
 ```
@@ -78,6 +78,8 @@ The calibration relies on the _CaTE_ scripts. Install these next to
 cd path/to/fluidized-bed-ct
 cd ../
 git clone https://github.com/adriaangraas/cate
+cd cate
+conda develop .
 ```
 
 ## 2. Run a calibration
