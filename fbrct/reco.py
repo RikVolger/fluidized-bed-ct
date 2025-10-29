@@ -373,6 +373,7 @@ class AstraReconstruction(Reconstruction):
                     min_constraint=min_constraint,
                     max_constraint=max_constraint,
                 )
+                loss = [loss]
         elif algo == "fdk":
             _astra_fdk_algo(vol_geom, proj_geom, vol_id, proj_id)
             loss = None
