@@ -374,8 +374,12 @@ for day in scans['measurements']:
                     voxel_size=voxel_size,
                     mask_size=mask_size)
 
-                output_path = Path(day['root']).parent / f"10_reconstructions/{experiment['measured']}"
+                if 'output' in experiment.keys():
+                    output_path = Path(day['root'], experiment['output'])
+                else:
+                    output_path = exp_path.parent.parent / f"10_reconstructions/{exp_path.name}"
                 output_path.mkdir(parents=True, exist_ok=True)
+
                 full_path = output_path / filename
 
                 print(f"Saving {full_path}")
