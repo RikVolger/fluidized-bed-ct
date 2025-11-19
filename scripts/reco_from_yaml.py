@@ -332,7 +332,6 @@ for day in scans['measurements']:
             elif TIME == "averaged":
                 frame = f"{scan.proj_start} - {scan.proj_stop}"
             else:
-                frame = "???"
                 raise ValueError("Time can either be 'resolved' or 'averaged', "
                                  "not whatever you chose. Redo your yaml file.")
             for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
