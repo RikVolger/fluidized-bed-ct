@@ -102,6 +102,9 @@ def load(
         if ims is not False:
             return ims
 
+    if type(path) is not str:
+        path = str(path)
+
     results, results_filenames = _collect_fnames(path, regex)
     # Check the results for continuity in the subsequences range
     lists = list(zip(*results))
@@ -251,12 +254,12 @@ def compute_bed_density(empty, ref, L: float, nr_bins=1000,
     """Computes the average bed density along a ray with length L, using an
     empty column, histogram with `nr_bins` bins."""
     # ref is generally the full image.
-
+    
     # computing log(ref/meas) / log(ref)
     # should be normalized between 0 and 1
     np.clip(empty, 1.0, None, out=empty)
     bed = np.log(empty / ref, where=ref != 0)
-
+        
     # This is an annoying value that I need to have in here, because sometimes
     # pieces of metal appear in the bed and they have huge attenuation. In such
     # case the modal value of the bed gets disturbed.

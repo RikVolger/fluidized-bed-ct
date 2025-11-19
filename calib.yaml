@@ -17,7 +17,7 @@ column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
 
 # Calibration properties
-root: U:\Xray RPT ChemE\X-ray\Xray_data\2025-06-13 Rik Cropper\preprocessed
+root: U:\Xray RPT ChemE\X-ray\Xray_data\2025-06-13 Rik Cropper\02_preprocessed
 calibration_folder: NeedleCalibration_5degps
 rotation:
   start: 39

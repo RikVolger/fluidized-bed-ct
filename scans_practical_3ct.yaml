@@ -15,7 +15,7 @@ detector_cols: 1548           # including ROI
 detector_rows: 1524           # including ROI
 column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
-calibration_file: U:\Xray RPT ChemE\X-ray\Xray_data\2025-06-13 Rik Cropper\calib\NeedleCalibration_5degps\geom.npy
+calibration_file: U:\Xray RPT ChemE\X-ray\Xray_data\2025-06-13 Rik Cropper\00_calib\bhc_optimized_geom.npy
 frames:
   measurement:
     start: 10
@@ -57,6 +57,126 @@ dark: u:\Xray RPT ChemE\X-ray\Xray_data\2025-06-26 Rik\02_preprocessed\Dark_22Hz
 # full: D:\Xray\1999-01-01 Evert\preprocessed_Full
 # Per folder with measurements, which measurements to reconstruct
 measurements:
+# 120kV, SC-BHC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  # - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_30lmin_120kV_22Hz
+  #   full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_120kV_22Hz
+  #   empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_120kV_22Hz
+  #   output: 2025-06-26 Rik\15_reconstruction_sc_bhc\1500x1500Crop_30lmin_120kV_22Hz
+  # - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_80lmin_120kV_22Hz
+  #   full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_120kV_22Hz
+  #   empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_120kV_22Hz
+  #   output: 2025-06-26 Rik\15_reconstruction_sc_bhc\1500x1500Crop_80lmin_120kV_22Hz
+  # - measured: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_100lmin_120kV_22Hz
+  #   full: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_Full_120kV_22Hz
+  #   empty: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_Empty_120kV_22Hz
+  #   output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_100lmin_120kV_22Hz
+  - measured: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_150lmin_120kV_22Hz
+    full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_120kV_22Hz
+    output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_150lmin_120kV_22Hz
+# 135kV, SC-BHC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  # - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_30lmin_135kV_22Hz
+  #   full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_135kV_22Hz
+  #   empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_135kV_22Hz
+  #   output: 2025-06-26 Rik\15_reconstruction_sc_bhc\1500x1500Crop_30lmin_135kV_22Hz
+  # - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_80lmin_135kV_22Hz
+  #   full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_135kV_22Hz
+  #   empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_135kV_22Hz
+  #   output: 2025-06-26 Rik\15_reconstruction_sc_bhc\1500x1500Crop_80lmin_135kV_22Hz
+  # - measured: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_100lmin_135kV_22Hz
+  #   full: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_Full_135kV_22Hz
+  #   empty: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_Empty_135kV_22Hz
+  #   output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_100lmin_135kV_22Hz
+  - measured: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_150lmin_135kV_22Hz
+    full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_135kV_22Hz
+    output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_150lmin_135kV_22Hz
+# 150kV, SC-BHC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  # - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_30lmin_150kV_22Hz
+  #   full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_150kV_22Hz
+  #   empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_150kV_22Hz
+  #   output: 2025-06-26 Rik\15_reconstruction_sc_bhc\1500x1500Crop_30lmin_150kV_22Hz
+  # - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_80lmin_150kV_22Hz
+  #   full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_150kV_22Hz
+  #   empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_150kV_22Hz
+  #   output: 2025-06-26 Rik\15_reconstruction_sc_bhc\1500x1500Crop_80lmin_150kV_22Hz
+  # - measured: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_100lmin_150kV_22Hz
+  #   full: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_Full_150kV_22Hz
+  #   empty: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_Empty_150kV_22Hz
+  #   output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_100lmin_150kV_22Hz
+  - measured: 2025-06-27 Rik\05_sc_bhc\1500x1500Crop_150lmin_150kV_22Hz
+    full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Empty_150kV_22Hz
+    output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_150lmin_150kV_22Hz
+# 120kV, PP-BHC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  # - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_30lmin_120kV_22Hz
+  #   full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_120kV_22Hz
+  #   empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_120kV_22Hz
+  #   output: 2025-06-26 Rik\14_reconstruction_pp_bhc\1500x1500Crop_30lmin_120kV_22Hz
+  # - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_80lmin_120kV_22Hz
+  #   full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_120kV_22Hz
+  #   empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_120kV_22Hz
+  #   output: 2025-06-26 Rik\14_reconstruction_pp_bhc\1500x1500Crop_80lmin_120kV_22Hz
+  # - measured: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_100lmin_120kV_22Hz
+  #   full: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_Full_120kV_22Hz
+  #   empty: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_Empty_120kV_22Hz
+  #   output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_100lmin_120kV_22Hz
+  - measured: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_150lmin_120kV_22Hz
+    full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_120kV_22Hz
+    empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_120kV_22Hz
+    output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_150lmin_120kV_22Hz
+# 135kV, PP-BHC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  # - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_30lmin_135kV_22Hz
+  #   full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_135kV_22Hz
+  #   empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_135kV_22Hz
+  #   output: 2025-06-26 Rik\14_reconstruction_pp_bhc\1500x1500Crop_30lmin_135kV_22Hz
+  # - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_80lmin_135kV_22Hz
+  #   full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_135kV_22Hz
+  #   empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_135kV_22Hz
+  #   output: 2025-06-26 Rik\14_reconstruction_pp_bhc\1500x1500Crop_80lmin_135kV_22Hz
+  # - measured: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_100lmin_135kV_22Hz
+  #   full: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_Full_135kV_22Hz
+  #   empty: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_Empty_135kV_22Hz
+  #   output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_100lmin_135kV_22Hz
+  - measured: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_150lmin_135kV_22Hz
+    full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_135kV_22Hz
+    empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_135kV_22Hz
+    output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_150lmin_135kV_22Hz
+# 150kV, PP-BHC
+- day: 26-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\
+  reconstructions:
+  # - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_30lmin_150kV_22Hz
+  #   full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_150kV_22Hz
+  #   empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_150kV_22Hz
+  #   output: 2025-06-26 Rik\14_reconstruction_pp_bhc\1500x1500Crop_30lmin_150kV_22Hz
+  # - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_80lmin_150kV_22Hz
+  #   full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_150kV_22Hz
+  #   empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_150kV_22Hz
+  #   output: 2025-06-26 Rik\14_reconstruction_pp_bhc\1500x1500Crop_80lmin_150kV_22Hz
+  # - measured: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_100lmin_150kV_22Hz
+  #   full: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_Full_150kV_22Hz
+  #   empty: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_Empty_150kV_22Hz
+  #   output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_100lmin_150kV_22Hz
+  - measured: 2025-06-27 Rik\04_pp_bhc\1500x1500Crop_150lmin_150kV_22Hz
+    full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_150kV_22Hz
+    empty: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Empty_150kV_22Hz
+    output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_150lmin_150kV_22Hz
 # 120kV, non-SC
 # - day: 26-06-2025
 #   root: U:\Xray RPT ChemE\X-ray\Xray_data\
@@ -138,9 +258,9 @@ measurements:
 #     empty: 2025-06-27 Rik\03_scattercorrected\1500x1500Crop_Empty_135kV_22Hz
 #     output: 2025-06-27 Rik\13_reconstruction_sc\1500x1500Crop_150lmin_135kV_22Hz
 # 150kV, non-SC
-- day: 26-06-2025
-  root: U:\Xray RPT ChemE\X-ray\Xray_data\
-  reconstructions:
+# - day: 26-06-2025
+#   root: U:\Xray RPT ChemE\X-ray\Xray_data\
+#   reconstructions:
   # - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_30lmin_150kV_22Hz
   #   full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
   #   empty: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
@@ -149,14 +269,14 @@ measurements:
   #   full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
   #   empty: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
   #   output: 2025-06-26 Rik\12_reconstruction_pp\1500x1500Crop_80lmin_150kV_22Hz
-  - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_100lmin_150kV_22Hz
-    full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
-    empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
-    output: 2025-06-27 Rik\12_reconstruction_pp\1500x1500Crop_100lmin_150kV_22Hz
-  - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_150lmin_150kV_22Hz
-    full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
-    empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
-    output: 2025-06-27 Rik\12_reconstruction_pp\1500x1500Crop_150lmin_150kV_22Hz
+  # - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_100lmin_150kV_22Hz
+  #   full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
+  #   empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
+  #   output: 2025-06-27 Rik\12_reconstruction_pp\1500x1500Crop_100lmin_150kV_22Hz
+  # - measured: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_150lmin_150kV_22Hz
+  #   full: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
+  #   empty: 2025-06-27 Rik\02_preprocessed\1500x1500Crop_Empty_150kV_22Hz
+  #   output: 2025-06-27 Rik\12_reconstruction_pp\1500x1500Crop_150lmin_150kV_22Hz
 # 150kV, SC
 # - day: 26-06-2025
 #   root: U:\Xray RPT ChemE\X-ray\Xray_data\
