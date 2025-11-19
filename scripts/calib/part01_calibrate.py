@@ -5,7 +5,12 @@ import cate.xray as xray
 import yaml
 import warnings
 from cate.util import plot_projected_markers
-from scripts.calib.util import *
+from scripts.calib.util import (
+    annotated_data,
+    triangle_geom,
+    triple_camera_circular_geometry,
+    marker_optimization,
+    markers_from_leastsquares_intersection)
 # TODO find a way to avoid import * statements.
 
 
@@ -58,6 +63,7 @@ for t in t_annotated:
 
 
 """ 2. Annotate the projections, for a description of markers, see `util.py`"""
+# [ ] change folder to 00_calib
 res_path = Path(root.parent / "calib" / calib_folder)
 if not res_path.is_dir():
     res_path.mkdir(
@@ -70,7 +76,7 @@ multicam_data = annotated_data(
     fname="needles",
     resource_path=res_path,
     cameras=[1, 2, 3],
-    open_annotator=True, #True,  # set to `True` if images have not been annotated
+    open_annotator=True,    # set to `True` if images have not been annotated
     vmin=6.0,
     vmax=10.0,
 )
@@ -79,7 +85,7 @@ cate_astra.pixels2coords(multicam_data, detector)  # convert to physical coords
 
 """ 3. Set up a multi-camera geometry, where sources, detectors and angles are
 the unknowns."""
-pre_geoms = triangle_geom(SOURCE_RADIUS, DETECTOR_RADIUS, 
+pre_geoms = triangle_geom(SOURCE_RADIUS, DETECTOR_RADIUS,
                           rotation=False, shift=False, mirrored=mirrored)
 srcs = [g.source for g in pre_geoms]
 dets = [g.detector for g in pre_geoms]
