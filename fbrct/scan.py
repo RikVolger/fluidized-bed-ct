@@ -63,6 +63,11 @@ def cate_to_astra(path, det, geom_scaling_factor=None, angles=None):
     import pickle
     from cate import astra, xray
     from numpy.lib.format import read_magic, _check_version, _read_array_header
+    from pathlib import Path
+
+    if Path(path).name == "bhc_optimized_geom.npy":
+        geoms_all_cams = np.load(path)
+        return geoms_all_cams
 
     class RenamingUnpickler(pickle.Unpickler):
         def find_class(self, module, name):
