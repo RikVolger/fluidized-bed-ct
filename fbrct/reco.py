@@ -364,6 +364,7 @@ class AstraReconstruction(Reconstruction):
                         max_constraint=max_constraint,
                         algo_id=algo_id
                     )
+                loss = list(loss)
             else:
                 loss, _ = _astra_sirt_algo(
                     vol_id,
@@ -376,9 +377,9 @@ class AstraReconstruction(Reconstruction):
                 loss = [loss]
         elif algo == "fdk":
             _astra_fdk_algo(vol_geom, proj_geom, vol_id, proj_id)
-            loss = None
+            loss = [None]
         else:
-            raise ValueError("Algorithm value incorrect.")
+            raise ValueError("Algorithm value unknown.")
 
         return vol_id, vol_geom, loss
 
