@@ -355,7 +355,7 @@ for day in scans['measurements']:
                     'full_folder': full.projs_dir,
                     'iterations': NITERS,
                     'algorithm': algo,
-                    'loss': list(loss),
+                    'loss': loss,
                     'time': TIME,
                     'frame': frame,
                     'time_taken': toc-tic,
