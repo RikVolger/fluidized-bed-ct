@@ -65,6 +65,7 @@ def cate_to_astra(path, det, geom_scaling_factor=None, angles=None):
     from numpy.lib.format import read_magic, _check_version, _read_array_header
     from pathlib import Path
 
+    # BHC optimized geometries are already in numpy format, no need to unpickle
     if Path(path).name == "bhc_optimized_geom.npy":
         geoms_all_cams = np.load(path)
         return geoms_all_cams
