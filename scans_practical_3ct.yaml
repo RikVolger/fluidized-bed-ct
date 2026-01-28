@@ -15,7 +15,7 @@ detector_cols: 1548           # including ROI
 detector_rows: 1524           # including ROI
 column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
-calibration_file: D:\XRay\XRay Summer 2025 - Rik Croppers\2025-06-26 Rik\00_calib\bhc_optimized_geom.npy
+calibration_file: u:\Xray RPT ChemE\X-ray\Xray_data\2025-06-26 Rik\00_calib\bhc_optimized_geom.npy
 frames:
   measurement:
     start: 10
@@ -54,13 +54,13 @@ initialize: flat  # 'flat', 'ones' or 'parabolic'
 # experiment-specific 'empty', 'dark' or 'full' measurement
 # empty: D:\XRay\1999-01-01 Evert\preprocessed_Empty
 # dark: u:\Xray RPT ChemE\X-ray\Xray_data\2025-06-26 Rik\02_preprocessed\Dark_22Hz
-dark: None
+dark: None    # Dark corrections are now all done in preprocessing, so no need here.
 # full: D:\Xray\1999-01-01 Evert\preprocessed_Full
 # Per folder with measurements, which measurements to reconstruct
 measurements:
 # 120kV, SC-BHC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_30lmin_120kV_22Hz
     full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_120kV_22Hz
@@ -80,7 +80,7 @@ measurements:
     output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_150lmin_120kV_22Hz
 # 135kV, SC-BHC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_30lmin_135kV_22Hz
     full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_135kV_22Hz
@@ -100,7 +100,7 @@ measurements:
     output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_150lmin_135kV_22Hz
 # 150kV, SC-BHC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_30lmin_150kV_22Hz
     full: 2025-06-26 Rik\05_sc_bhc\1500x1500Crop_Full_150kV_22Hz
@@ -120,7 +120,7 @@ measurements:
     output: 2025-06-27 Rik\15_reconstruction_sc_bhc\1500x1500Crop_150lmin_150kV_22Hz
 # 120kV, PP-BHC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_30lmin_120kV_22Hz
     full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_120kV_22Hz
@@ -140,7 +140,7 @@ measurements:
     output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_150lmin_120kV_22Hz
 # 135kV, PP-BHC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_30lmin_135kV_22Hz
     full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_135kV_22Hz
@@ -160,7 +160,7 @@ measurements:
     output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_150lmin_135kV_22Hz
 # 150kV, PP-BHC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_30lmin_150kV_22Hz
     full: 2025-06-26 Rik\04_pp_bhc\1500x1500Crop_Full_150kV_22Hz
@@ -180,7 +180,7 @@ measurements:
     output: 2025-06-27 Rik\14_reconstruction_pp_bhc\1500x1500Crop_150lmin_150kV_22Hz
 # 120kV, non-SC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_30lmin_120kV_22Hz
     full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_120kV_22Hz
@@ -200,7 +200,7 @@ measurements:
     output: 2025-06-27 Rik\12_reconstruction_pp\1500x1500Crop_150lmin_120kV_22Hz
 # # 120kV, SC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_30lmin_120kV_22Hz
     full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_120kV_22Hz
@@ -220,7 +220,7 @@ measurements:
     output: 2025-06-27 Rik\13_reconstruction_sc\1500x1500Crop_150lmin_120kV_22Hz
 # # 135kV, non-SC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_30lmin_135kV_22Hz
     full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_135kV_22Hz
@@ -240,7 +240,7 @@ measurements:
     output: 2025-06-27 Rik\12_reconstruction_pp\1500x1500Crop_150lmin_135kV_22Hz
 # # 135kV, SC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_30lmin_135kV_22Hz
     full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_135kV_22Hz
@@ -260,7 +260,7 @@ measurements:
     output: 2025-06-27 Rik\13_reconstruction_sc\1500x1500Crop_150lmin_135kV_22Hz
 # 150kV, non-SC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_30lmin_150kV_22Hz
     full: 2025-06-26 Rik\02_preprocessed\1500x1500Crop_Full_150kV_22Hz
@@ -280,7 +280,7 @@ measurements:
     output: 2025-06-27 Rik\12_reconstruction_pp\1500x1500Crop_150lmin_150kV_22Hz
 # 150kV, SC
 - day: 26-06-2025
-  root: D:\XRay\XRay Summer 2025 - Rik Croppers\
+  root: u:\Xray RPT ChemE\X-ray\Xray_data\
   reconstructions:
   - measured: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_30lmin_150kV_22Hz
     full: 2025-06-26 Rik\03_scattercorrected\1500x1500Crop_Full_150kV_22Hz
