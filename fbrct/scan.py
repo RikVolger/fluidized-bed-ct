@@ -61,8 +61,9 @@ def cate_to_astra(path, det, geom_scaling_factor=None, angles=None):
     ASTRA vector convention."""
 
     import pickle
+    import struct
+    import ast
     from cate import astra, xray
-    from numpy.lib.format import read_magic, _check_version, _read_array_header
     from pathlib import Path
 
     # BHC optimized geometries are already in numpy format, no need to unpickle
@@ -77,11 +78,21 @@ def cate_to_astra(path, det, geom_scaling_factor=None, angles=None):
             return super().find_class(module, name)
 
     with open(path, "rb") as fp:
-        version = read_magic(fp)
-        _check_version(version)
-        dtype = _read_array_header(fp, version)[2]
-        assert dtype.hasobject
-        multicam_geom = RenamingUnpickler(fp).load()[0]
+        magic = fp.read(6)
+        if magic == b'\x93NUMPY':
+            version_major, version_minor = struct.unpack('<BB', fp.read(2))
+            if version_major == 1:
+                header_len = struct.unpack('<H', fp.read(2))[0]
+            else:
+                header_len = struct.unpack('<I', fp.read(4))[0]
+            header = fp.read(header_len)
+            header_dict = ast.literal_eval(header.decode('latin1'))
+            dtype = np.dtype(header_dict['descr'])
+            assert dtype.hasobject
+            multicam_geom = RenamingUnpickler(fp).load()[0]
+        else:
+            fp.seek(0)
+            multicam_geom = RenamingUnpickler(fp).load()[0]
 
     detector = astra.Detector(
         det["rows"], det["cols"], det["pixel_width"], det["pixel_height"]
