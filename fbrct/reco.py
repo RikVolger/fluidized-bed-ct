@@ -12,9 +12,9 @@ from fbrct.loader import (
     reference_via_mode, compute_bed_density, load, preprocess)
 
 # we use joblibs `Memory` to cache long results
-path = pathlib.Path(__file__).parent.resolve()
-cachedir = str(path.parent / "cache")
-memory = Memory(cachedir, verbose=0)
+# path = pathlib.Path(__file__).parent.resolve()
+# cachedir = str(path.parent / "cache")
+# memory = Memory(cachedir, verbose=0)
 
 def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
     import astra
@@ -100,7 +100,7 @@ class Reconstruction:
         return reduced
 
     @staticmethod
-    @memory.cache
+    # @memory.cache
     def _compute_or_restore_ref(ref_path,
                                 ref_projs,
                                 ref_full,

@@ -19,9 +19,9 @@ PROJECTION_FILE_REGEX = (
 #                                      "img_([0-9]{1,6})\.tif$"])
 
 # we use joblibs `Memory` to cache long results
-path = pathlib.Path(__file__).parent.resolve()
-cachedir = str(path.parent / "cache")
-memory = Memory(cachedir, verbose=0)
+# path = pathlib.Path(__file__).parent.resolve()
+# cachedir = str(path.parent / "cache")
+# memory = Memory(cachedir, verbose=0)
 
 
 def _collect_fnames(
