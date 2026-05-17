@@ -56,6 +56,8 @@ def _collect_fnames(
 
 
 def _find_average(path, cameras):
+    # TODO Implement an alarm here. This function should become obsolete to 
+    # avoid dynamic bias error.
     if not os.path.exists(path):
         raise IOError(f"The path to {path} does not seem to exist.")
 
@@ -96,6 +98,9 @@ def load(
     average: bool = False,
 ):
     """Load a stack of data from disk using a pattern."""
+    # TODO remove option to read average.tif (averaging before log operations).
+    # This method introduces dynamic bias error and thus underestimates holdup.
+
     # if time averaged and there is an average.tif, load that and be done
     if average:
         ims = _find_average(path, cameras)
@@ -128,6 +133,8 @@ def load(
     else:
         rows = slice(detector_rows.start, detector_rows.stop)
 
+    # TODO average should behave the same as time-resolved here. Averaging
+    # should be done after the log operations to avoid dynamic bias error.
     if average:
         ims = np.zeros((1, len(cameras), *im_shape), dtype=dtype)
     else:
@@ -135,10 +142,15 @@ def load(
 
     # make a dictionary with in the first key the detector, and second key
     # the timestep
+    # TODO why is this a nested dictionary? Isn't this possible with just two
+    # lists? Or a 2D list/np.ndarray if we're feeling fancy
     detector_timesteps = {i: {} for i in cameras}
     for i, ((cam_id, t), filename) in enumerate(
             zip(results, results_filenames)):
         if cam_id in cameras:
+            # TODO The real timestamps are written to file (timestamp data.txt).
+            # These can be used for more precise timestamps, also accounting for
+            # skipped frames in the middle of a measurement.
             t_actual = t - time_offsets[cam_id] if time_offsets is not None else t
             detector_timesteps[cam_id][t_actual] = filename
 
@@ -155,6 +167,8 @@ def load(
                 )
             # if verbose:
             #     tqdm.write(f"Reading {detector_timesteps[d][t]}")
+            # TODO Remove the average-specific behaviour here. No averaging 
+            # should be done before the log steps to avoid dynamic bias error.
             if average:
                 ims[0, d_i, rows] += tifffile.imread(detector_timesteps[d][t],
                                                      maxworkers=1)[detector_rows][0]
@@ -316,6 +330,7 @@ def preprocess(
     np.log(meas, out=meas)
     np.divide(meas, density_factor, out=meas, where=density_factor != 0)
     _isfinite(meas)
+    # TODO implement time-averaging here, after taking logarithms.
     return meas.astype(dtype)
 
 
