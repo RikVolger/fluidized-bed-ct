@@ -56,8 +56,8 @@ def _collect_fnames(
 
 
 def _find_average(path, cameras):
-    # TODO Implement an alarm here. This function should become obsolete to 
-    # avoid dynamic bias error.
+    raise DeprecationWarning("Average should not be taken before the log() " \
+        "operations. You're probably introducing dynamic bias error.")
     if not os.path.exists(path):
         raise IOError(f"The path to {path} does not seem to exist.")
 
