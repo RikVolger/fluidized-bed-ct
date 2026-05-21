@@ -12,12 +12,13 @@ from fbrct.loader import (
     reference_via_mode, compute_bed_density, load, preprocess)
 
 # we use joblibs `Memory` to cache long results
-path = pathlib.Path(__file__).parent.resolve()
-cachedir = str(path.parent / "cache")
-memory = Memory(cachedir, verbose=0)
+# path = pathlib.Path(__file__).parent.resolve()
+# cachedir = str(path.parent / "cache")
+# memory = Memory(cachedir, verbose=0)
 
 def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
     import astra
+    import astra.experimental
 
     proj_cfg = {
         "type": "cuda3d",
@@ -33,19 +34,21 @@ def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
 def _astra_sirt_algo(
     volume_id, sinogram_id, iters, mask_id,
     min_constraint=0.0, max_constraint=None,
+    algo_id=None
 ):
     import astra
+    if algo_id is None:
+        cfg = astra.astra_dict(
+            "SIRT3D_CUDA")  # 'FDK_CUDA', 'SIRT3D_CUDA', 'CGLS3D_CUDA',
+        cfg["ReconstructionDataId"] = volume_id
+        cfg["ProjectionDataId"] = sinogram_id
+        cfg["option"] = {"MinConstraint": min_constraint,
+                         "MaxConstraint": max_constraint,
+                         "ReconstructionMaskId": mask_id}
 
-    cfg = astra.astra_dict(
-        "SIRT3D_CUDA")  # 'FDK_CUDA', 'SIRT3D_CUDA', 'CGLS3D_CUDA',
-    cfg["ReconstructionDataId"] = volume_id
-    cfg["ProjectionDataId"] = sinogram_id
-    cfg["option"] = {"MinConstraint": min_constraint,
-                     "MaxConstraint": max_constraint,
-                     "ReconstructionMaskId": mask_id}
-
-    algo_id = astra.algorithm.create(cfg)
+        algo_id = astra.algorithm.create(cfg)
     astra.algorithm.run(algo_id, iters)  # nr iters
+    return astra.algorithm.get_res_norm(algo_id), algo_id
 
 
 class Reconstruction:
@@ -97,7 +100,7 @@ class Reconstruction:
         return reduced
 
     @staticmethod
-    @memory.cache
+    # @memory.cache
     def _compute_or_restore_ref(ref_path,
                                 ref_projs,
                                 ref_full,
@@ -115,7 +118,12 @@ class Reconstruction:
                                 scatter_mean_full,
                                 scatter_mean_empty):
         """This function avoids loading the entire stack of files when
-        the reference is already computed and stored."""
+        the reference is already computed and stored by using the
+        @memory.cache decorator. If you need to recompute, delete files
+        in ../cache/joblib/fbrct/reco.
+        NOTE: @memory.cache decorator is currently commented out because Rik 
+        spent way too much time finding out why an update of the data didn't 
+        update the reconstructions. Twice."""
 
         ref = load(ref_path, ref_projs, **load_kwargs)
         if dark is not None:
@@ -130,7 +138,8 @@ class Reconstruction:
         #     assert len(ref) == len(t_range)
 
         if density_factor is None:
-            density_factor = 1.0
+            # density_factor = 1.0
+            density_factor = np.ones_like(ref)
             if empty_path is not None:
                 assert col_inner_diameter is not None, (
                     "Column diameter needs to be known to compute empty"
@@ -169,13 +178,16 @@ class Reconstruction:
         darks_ran: range = None,
         empty_path=None,
         empty_rotational=False,
-        empty_reduction='mean',
+        empty_reduction=None,
         empty_projs: range = None,
         detector_rows: range = None,
         density_factor: float = None,
         col_inner_diameter=None,
         scatter_mean_full: float = 0.0,
         scatter_mean_empty: float = 0.0,
+        time: str = "averaged",
+        img_shape: tuple = (1524, 1548),
+        verbose: bool = False,
     ):
         """Loads and preprocesses the sinogram."""
 
@@ -187,6 +199,12 @@ class Reconstruction:
             load_kwargs["cameras"] = cameras
         if detector_rows is not None:
             load_kwargs["detector_rows"] = detector_rows
+        if time == "averaged":
+            load_kwargs["average"] = True
+        elif time == "resolved":
+            load_kwargs["average"] = False
+        load_kwargs["img_shape"] = img_shape
+        load_kwargs["verbose"] = verbose
 
         dark = None
         if darks_path is not None:
@@ -217,8 +235,10 @@ class Reconstruction:
                 scatter_mean_full,
                 scatter_mean_empty)
 
-        if density_factor is None:
+        if density_factor is None and ref is None:
             density_factor = 1.0
+        elif density_factor is None:
+            density_factor = np.ones_like(ref)
 
         meas = load(self._path, t_range, t_offsets, **load_kwargs)
         if dark is not None:
@@ -226,7 +246,8 @@ class Reconstruction:
         _scatter_correct(meas, scatter_mean_full)
         meas = preprocess(meas, ref,
                           ref_full=ref_full,
-                          scaling_factor=1 / density_factor)
+                          density_factor=density_factor,
+                          average=load_kwargs["average"])
         return np.ascontiguousarray(meas.astype(np.float32))
 
     @staticmethod
@@ -265,9 +286,6 @@ class Reconstruction:
 class AstraReconstruction(Reconstruction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def empty_volume_gpu(self, voxels: tuple, voxel_size):
-        return self.volume_gpu(voxels, voxel_size)
 
     def volume_gpu(self, voxels, voxel_size, data=None):
         import astra
@@ -315,34 +333,67 @@ class AstraReconstruction(Reconstruction):
         iters=200,
         min_constraint=0.0,
         max_constraint=None,
-        **kwargs,
+        investigating_loss: bool = False,   # flag to log loss progression during iterations
+        initialization: str = "flat",
+        r=None,
     ):
-        vol_id, vol_geom = self.empty_volume_gpu(voxels, voxel_size)
+        if initialization == "parabolic":
+            init = column_mask(
+                voxels,
+                r,
+                val=lambda x, y: max(1 - (x/r)**2 - (y/r)**2, 0)
+            )
+            init = np.transpose(init, [2, 1, 0])
+            # create column mask, where value is not 1, but dependent on a - b * y**2 - c * x**2
+        elif initialization == "ones":
+            init = 1.0
+        else:
+            init = None
+        vol_id, vol_geom = self.volume_gpu(voxels, voxel_size, init)
 
         print("Algorithm starts...")
         algo = algo.lower()
         if algo == "sirt":
             from fbrct import column_mask
-            col_mask = column_mask(voxels)
+            col_mask = column_mask(voxels, r)
             col_mask = np.transpose(col_mask, [2, 1, 0])
             mask_id, _ = self.volume_gpu(voxels, voxel_size, col_mask)
-            _astra_sirt_algo(
-                vol_id,
-                proj_id,
-                iters,
-                mask_id,
-                min_constraint=min_constraint,
-                max_constraint=max_constraint,
-            )
+            if investigating_loss:
+                # run _astra_sirt_algo for one iter at a time, recording loss
+                loss = np.zeros(iters)
+                algo_id = None
+                for i in range(iters):
+                    loss[i], algo_id = _astra_sirt_algo(
+                        vol_id,
+                        proj_id,
+                        1,
+                        mask_id,
+                        min_constraint=min_constraint,
+                        max_constraint=max_constraint,
+                        algo_id=algo_id
+                    )
+                loss = list(loss)
+            else:
+                loss, _ = _astra_sirt_algo(
+                    vol_id,
+                    proj_id,
+                    iters,
+                    mask_id,
+                    min_constraint=min_constraint,
+                    max_constraint=max_constraint,
+                )
+                loss = [loss]
         elif algo == "fdk":
             _astra_fdk_algo(vol_geom, proj_geom, vol_id, proj_id)
+            loss = [None]
         else:
-            raise ValueError("Algorithm value incorrect.")
+            raise ValueError("Algorithm value unknown.")
 
-        return vol_id, vol_geom
+        return vol_id, vol_geom, loss
 
     @staticmethod
     def forward(volume_id, volume_geom, projection_geom, returnData=False):
+        import astra
         return astra.creators.create_sino3d_gpu(
             volume_id, projection_geom, volume_geom, returnData=returnData
         )

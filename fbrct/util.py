@@ -23,16 +23,19 @@ def plot_projs(
         row_end = projs.shape[1]
 
     if subplot_row:
-        subplt_shape = (
-            (1, len(projs),) if projs.shape[1] > projs.shape[2]
-            else (len(projs), 1)
-        )
+        # Determine subplot shape based on projection dimensions
+        if projs.shape[1] > projs.shape[2]:
+            subplot_shape = (1, len(projs),)
+        else:
+            subplot_shape = (len(projs), 1)
     else:
-        subplt_shape = (
-            (len(projs),) if projs.shape[2] > projs.shape[1] else (len(projs), 1)
-        )
+        # Determine subplot shape based on projection dimensions
+        if projs.shape[2] > projs.shape[1]:
+            subplot_shape = (len(projs),)
+        else:
+            subplot_shape = (len(projs), 1)
 
-    fig, axs = plt.subplots(*subplt_shape, figsize=figsize)
+    fig, axs = plt.subplots(*subplot_shape, figsize=figsize)
 
     def x_fmt(x, y):
         return "{:.0f}".format(x * pixel_width)
@@ -113,7 +116,6 @@ def plot_nicely(
         (im.shape[1] // 2) - 0.5,
     )
     im = np.flipud(np.swapaxes(im, 0, 1))
-    print(im.shape)
     ax.imshow(
         im,
         vmin=vmin,

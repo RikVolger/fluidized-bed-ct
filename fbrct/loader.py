@@ -1,119 +1,98 @@
 import itertools
-import os
-import pathlib
-import re
 import warnings
 from typing import Sequence
-from joblib import Memory
+from pathlib import Path
 
 import numpy as np
 from tifffile import tifffile
-import imageio
 from tqdm import tqdm
 
-PROJECTION_FILE_REGEX = "camera ([1-3])/img_([0-9]{1,6})\.tif$"
 
-# we use joblibs `Memory` to cache long results
-path = pathlib.Path(__file__).parent.resolve()
-cachedir = str(path.parent / "cache")
-memory = Memory(cachedir, verbose=0)
-
-
-def _collect_fnames(
-    path: str,
-    regex: str = PROJECTION_FILE_REGEX,
-):
-    if not os.path.exists(path):
-        raise IOError(f"The path to {path} does not seem to exist.")
-
-    results, results_filenames = [], []
-    regex = re.compile(regex)
-    print(path)
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            full_filename = os.path.join(root, file)
-            match = regex.search(full_filename)
-            if match is not None:
-                groups = match.groups()
-
-                tmp_result = [None] * len(groups)
-                for i, group in enumerate(groups):
-                    if not group.isdigit():
-                        raise Exception(
-                            "The regex captured a non-digit, cannot proceed."
-                        )
-
-                    tmp_result[i] = int(group)
-
-                results.append(tmp_result)
-                results_filenames.append(full_filename)
-
-    return results, results_filenames
+def roughly_equal(n1, n2, play=100):
+    """Determine if n1 and n2 are roughly equal - within an absolute margin (play)"""
+    n2_min = n2 - play
+    n2_max = n2 + play
+    return n2_min < n1 < n2_max
 
 
 def load(
-    path: str,
-    time_range: range = None,
+    path: str | Path,
+    time_range: range,
     time_offsets = None,
-    regex: str = PROJECTION_FILE_REGEX,
-    dtype=np.float32,
+    dtype = np.float32,
     verbose: bool = True,
     cameras: Sequence = (1, 2, 3),
-    detector_rows: Sequence = None,
+    img_shape: Sequence = (1524, 1548),
+    average: bool = False,
 ):
     """Load a stack of data from disk using a pattern."""
 
-    results, results_filenames = _collect_fnames(path, regex)
-    # Check the results for continuity in the subsequences range
-    lists = list(zip(*results))
+    # Ideas for a renewed load function
+    # path updated to pathlib.Path
+    # check for path existence in load with path.exists(), raise sensible error 
+    #   if it doesn't
+    if isinstance(path, str):
+        path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Failed to load data. {str(path)} does not exist")
+    
+    ims = np.zeros((len(time_range), len(cameras), *img_shape), dtype=dtype)
 
-    first_cam = cameras[0]
-    amount_matches = lists[0].count(first_cam)
-    assert amount_matches > 0
+    n_images = None
+    # change regex for glob. run for each camera.
     for cam in cameras:
-        assert amount_matches == lists[0].count(cam)
-
-    if time_range is None:
-        time_range = range(np.min(lists[1]), np.max(lists[1]) + 1)
-
-    # load into results
-    im_shape = list(imageio.v2.imread(results_filenames[0]).shape)
-    if detector_rows is None:
-        rows = slice(0, im_shape[0])
-    else:
-        rows = slice(detector_rows.start, detector_rows.stop)
-    ims = np.zeros((len(time_range), len(cameras), *im_shape), dtype=dtype)
-
-    # make a dictionary with in the first key the detector, and second key
-    # the timestep
-    nested_dict = {i: {} for i in cameras}
-    for i, ((cam_id, t), filename) in enumerate(
-        zip(results, results_filenames)):
-        if cam_id in cameras:
-            t_actual = t - time_offsets[cam_id] if time_offsets is not None else t
-            nested_dict[cam_id][t_actual] = filename
-
-    # check if wanted timesteps are in the dict, and load them
-    for t_i, t in enumerate(tqdm(time_range)) if verbose else enumerate(
-        time_range):
-        for d_i, d in enumerate(nested_dict.keys()):
-            if not t in nested_dict[d]:
-                raise FileNotFoundError(
-                    f"Could not find timestep {t} from "
-                    f"detector {d} in directory {path}."
-                )
-            if verbose:
-                print("Reading ", nested_dict[d][t])
-            # faster but imageio may be easier to install
-            ims[t_i, d_i, rows] = \
-                tifffile.imread(nested_dict[d][t], maxworkers=1)[
-                # imageio.v2.imread(nested_dict[d][t])[
-                        detector_rows]
-
+        cam_path = path / f"camera {cam}"
+        files = list(cam_path.glob("img_*.tif"))
+        # For each glob, check that there are results in the list.
+        if len(files) == 0:
+            raise FileNotFoundError(f"No images found in {str(cam_path)}")
+        if n_images is None:
+            n_images = len(files)
+        # for camera 2 & 3, check that the number of results matches the number 
+        # obtained for cam 1 exact (time resolved) or is roughly equal (time average)
+        elif average:
+            if not roughly_equal(n_images, len(files)):
+                raise FileNotFoundError(f"Number of images for camera {cam} is " \
+                                        f"too different from the number of images " \
+                                        f"for camera 1. Folder {str(path)}")
+        else:
+            if n_images != len(files):
+                raise FileNotFoundError(f"Number of images for camera {cam} is " \
+                                        f"too different from the number of images " \
+                                        f"for camera 1. Folder {str(path)}")
+        
+        requested_files = [f"img_{t}.tif" for t in time_range]
+        filenames = [file.name for file in files]
+        matches = np.isin(requested_files, filenames)
+        if average and sum(~matches) > 50:
+            raise ValueError(f"Missing more than 50 requested files in " \
+                             f"{str(cam_path)}")
+        if not any(matches):
+            raise ValueError(f"Found none of the requested timesteps for " \
+                             f"{str(cam_path)}")
+        elif not all(matches):
+            raise ValueError(f"Did not find all requested timesteps for " \
+                             f"{str(cam_path)}")
+        
+        # TODO The real timestamps are written to file (timestamp data.txt).
+        #   These can be used for more precise timestamps, also accounting for
+        #   skipped frames in the middle of a measurement.
+        ordered_files = []
+        for r_file in requested_files:
+            for file in files:
+                if file.name == r_file:
+                    ordered_files.append(file)
+        if verbose:
+            print(f"Reading {cam_path}")
+        ims[:, cam - 1, ...] = tifffile.imread(ordered_files,
+                                               ioworkers=4, maxworkers=2)
+        if verbose:
+            print(f"Read.")
+    
     return np.ascontiguousarray(ims)
 
 
-@memory.cache
+# @memory.cache
 def reference_via_mode(data, qu=1, deg=20, nr_bins=100, nr_linspace=1000):
     xp = np
     data = xp.asarray(data)
@@ -177,65 +156,53 @@ def _isfinite(a):
     assert np.isfinite(M)
 
 
-def _apply_darkfields(dark, meas):
-    dark = np.median(dark, axis=0)
-    dark = np.expand_dims(dark, 0)
-    dark = np.clip(dark, 0.0, None, out=dark)
-
-    meas[:] -= dark
-    np.clip(meas, 0.0, None, out=meas)
-    _isfinite(meas)
-
-
-def _scatter_correct(meas, scatter_mean: float = 0.0):
-    if scatter_mean != 0.0:
-        meas -= scatter_mean
-        np.clip(meas, 0.0, None, out=meas)
-        _isfinite(meas)
-
-
 def compute_bed_density(empty, ref, L: float, nr_bins=1000,
-                        max_bed_val=1.0) -> float:
+                        max_bed_val=None) -> float:
     """Computes the average bed density along a ray with length L, using an
     empty column, histogram with `nr_bins` bins."""
-
+    # ref is generally the full image.
+    
     # computing log(ref/meas) / log(ref)
     # should be normalized between 0 and 1
     np.clip(empty, 1.0, None, out=empty)
-    bed = np.log(empty / ref, where=ref != 0)
-
+    # Avoid divide by zero and have 1.0 in these locations.
+    bed = np.log(empty / ref, where=ref != 0, out=np.ones_like(empty))
+        
     # This is an annoying value that I need to have in here, because sometimes
     # pieces of metal appear in the bed and they have huge attenuation. In such
     # case the modal value of the bed gets disturbed.
-    np.clip(bed, 0., max_bed_val, out=bed)
+    np.clip(bed, 0.0, max_bed_val, out=bed)
     _isfinite(bed)
 
-    np.clip(bed, 0.0, None, out=bed)
-
+    modal_values = np.zeros(bed.shape)
     sum = 0.0
     for i in range(bed.shape[0]):
-        counts, bins = np.histogram(bed[i].flatten(), bins=nr_bins)
+        counts, bins = np.histogram(bed[i, :, 500:1000].flatten(), bins=nr_bins)
         counts[:100] = 0.0
         max_value = bins[np.argmax(counts)]  # corresponds to inner diam
         print(f"Proj {i}: mode of column statistic: ", max_value)
         print(f"Proj {i}: density approx.: ", 1 / L * max_value)
         # import matplotlib.pyplot as plt
         # plt.figure()
-        # plt.hist(bed.flatten(), bins=1000)
+        # plt.hist(bed[i, :, 500:1000].flatten(), bins=1000)
         # plt.show()
         sum += (1 / L) * max_value
+        modal_values[i, ...] = max_value / L
 
     avg = sum / bed.shape[0]  # average density over nr. projs/cams
     print("Average density: ", avg)
-    return avg
+    return modal_values
+    # return avg
+    # return bed
 
 
 def preprocess(
     meas,
-    ref=None,
-    scaling_factor=1.0,
-    dtype=np.float32,
-    ref_full=True,
+    ref = None,
+    density_factor = 1.0,
+    dtype = np.float32,
+    ref_full = True,
+    average = False,
 ):
     """A simple implementation of Beer-Lambert with referencing
 
@@ -256,22 +223,11 @@ def preprocess(
         np.clip(meas, 1.0, None, out=meas)
 
     np.log(meas, out=meas)
-    np.multiply(meas, scaling_factor, out=meas)
+    np.divide(meas, density_factor, out=meas, where=density_factor != 0)
     _isfinite(meas)
+    if average:
+        meas = np.mean(meas, axis=0, dtype=dtype)
+        # reintroduce the time axis with just a single input, it is expected elsewhere.
+        meas = np.expand_dims(meas, axis=0)
     return meas.astype(dtype)
 
-
-def projection_numbers(path, cam=None) -> list:
-    """Returns projection numbers of camera `cam`."""
-    if cam is None:
-        cam = 1
-
-    results, results_fnames = _collect_fnames(path)
-    return sorted([r[1] for r in results if r[0] == cam])
-
-
-def load_first_projection_number(path) -> int:
-    results, results_fnames = _collect_fnames(path)
-    # Check the results for continuity in the subsequences range
-    lists = list(zip(*results))
-    return sorted(lists[1])[0]

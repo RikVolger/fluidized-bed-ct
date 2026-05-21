@@ -138,6 +138,7 @@ def annotated_data(
     projs_path: str,
     times: Sequence,
     fname: str,
+    resource_path: str,
     cameras: Sequence = (1, 2, 3),
     open_annotator: bool = False,
     vmin=None,
@@ -155,7 +156,7 @@ def annotated_data(
         for t in times:
             # open a EntityLocations class for this file, in the
             points = DelftNeedleEntityLocations(
-                f"resources/{fname}_cam{cam}.npy",
+                f"{resource_path}/{fname}_cam{cam}.npy",
                 t)
             if open_annotator:
                 projs = _load_projs(projs_path, t_range=range(t, t + 1),
@@ -170,10 +171,19 @@ def annotated_data(
 
 
 def triangle_geom(
-    src_rad, det_rad, rotation=False, shift=False, fix_first_det=True,
+        src_rad,
+        det_rad,
+        rotation=False,
+        shift=False,
+        fix_first_det=True,
+        mirrored=False
 ):
     geoms = []
-    for i, src_a in enumerate([0, 2 / 3 * np.pi, 4 / 3 * np.pi]):
+    angles = np.array([0, 2 / 3 * np.pi, 4 / 3 * np.pi])
+    if not mirrored:
+        angles = -1 * angles
+    
+    for i, src_a in enumerate(angles):
         det_a = src_a + np.pi  # opposing
         src = src_rad * np.array([np.cos(src_a), np.sin(src_a), 0])
         det = det_rad * np.array([np.cos(det_a), np.sin(det_a), 0])
@@ -230,7 +240,7 @@ def astra_reco_rotation_singlecamera(
     **kwargs):
     vectors = np.array([geom2astravec(g, reco.detector) for g in geoms])
     proj_id, proj_geom = reco.sino_gpu_and_proj_geom(data, vectors)
-    vol_id, vol_geom = reco.backward(
+    vol_id, vol_geom, _ = reco.backward(
         proj_id, proj_geom, algo=algo, voxels=voxels,
         voxel_size=voxel_size, **kwargs)
     return vol_id, vol_geom
@@ -306,8 +316,8 @@ def prep_projs(projs):
     return np.ascontiguousarray(projs)
 
 
-def marker_optimization(
-    geoms, data, nr_iters: int = 1, max_nfev=10, plot=False, **kwargs):
+def marker_optimization(geoms, data, nr_iters: int = 1, max_nfev=10, 
+                        plot=False, **kwargs):
     from cate.param import params2ndarray
     from scipy.optimize import least_squares
 

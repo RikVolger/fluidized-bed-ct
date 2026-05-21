@@ -1,0 +1,19 @@
+name: fluidized_bed_ct
+channels:
+  - defaults
+  - conda-forge
+  - astra-toolbox/label/dev
+dependencies:
+  - python
+  - numpy
+  - scipy
+  - imageio
+  - matplotlib
+  - joblib
+  - tqdm
+  - pyqtgraph
+  - conda-build
+  - transforms3d
+  - tifffile
+  - pyvista
+  - astra-toolbox/label/dev::astra-toolbox

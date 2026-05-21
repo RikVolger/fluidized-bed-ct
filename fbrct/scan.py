@@ -61,8 +61,15 @@ def cate_to_astra(path, det, geom_scaling_factor=None, angles=None):
     ASTRA vector convention."""
 
     import pickle
+    import struct
+    import ast
     from cate import astra, xray
-    from numpy.lib.format import read_magic, _check_version, _read_array_header
+    from pathlib import Path
+
+    # BHC optimized geometries are already in numpy format, no need to unpickle
+    if Path(path).name == "bhc_optimized_geom.npy":
+        geoms_all_cams = np.load(path)
+        return geoms_all_cams
 
     class RenamingUnpickler(pickle.Unpickler):
         def find_class(self, module, name):
@@ -71,11 +78,21 @@ def cate_to_astra(path, det, geom_scaling_factor=None, angles=None):
             return super().find_class(module, name)
 
     with open(path, "rb") as fp:
-        version = read_magic(fp)
-        _check_version(version)
-        dtype = _read_array_header(fp, version)[2]
-        assert dtype.hasobject
-        multicam_geom = RenamingUnpickler(fp).load()[0]
+        magic = fp.read(6)
+        if magic == b'\x93NUMPY':
+            version_major, version_minor = struct.unpack('<BB', fp.read(2))
+            if version_major == 1:
+                header_len = struct.unpack('<H', fp.read(2))[0]
+            else:
+                header_len = struct.unpack('<I', fp.read(4))[0]
+            header = fp.read(header_len)
+            header_dict = ast.literal_eval(header.decode('latin1'))
+            dtype = np.dtype(header_dict['descr'])
+            assert dtype.hasobject
+            multicam_geom = RenamingUnpickler(fp).load()[0]
+        else:
+            fp.seek(0)
+            multicam_geom = RenamingUnpickler(fp).load()[0]
 
     detector = astra.Detector(
         det["rows"], det["cols"], det["pixel_width"], det["pixel_height"]
@@ -170,7 +187,6 @@ class Scan(ABC):
         darks=None,
         empty=None,
         is_rotational: bool = False,
-        cams_are_rotated: bool = False,
         is_full: bool = False,
         col_inner_diameter: float = None,
         density_factor: float = None
@@ -196,7 +212,6 @@ class Scan(ABC):
         self.projs_offset = projs_offset
         self.col_inner_diameter = col_inner_diameter
         self.density_factor = density_factor
-        self.cams_are_rotated = cams_are_rotated
 
     def add_phantom(self, phantom: Phantom):
         self.phantoms.append(phantom)
@@ -222,18 +237,20 @@ class StaticScan(Scan):
         self,
         *args,
         proj_start: int,
-        proj_end: int,
+        proj_stop: int,
+        proj_step: int = 1,
         **kwargs,
     ):
-        assert proj_end > proj_start > 0
+        assert proj_stop > proj_start > 0
         self.proj_start = proj_start
-        self.proj_end = proj_end
-        projs = list(range(proj_start, proj_end))
+        self.proj_stop = proj_stop
+        self.proj_step = proj_step
+        projs = list(range(proj_start, proj_stop, proj_step))
         super().__init__(*args, projs, **kwargs)
 
     @property
     def nr_projs(self):
-        return self.proj_end - self.proj_start
+        return self.proj_stop - self.proj_start
 
     def geometry(self):
         if self._geometry_manual is True:
@@ -268,6 +285,39 @@ class DynamicScan(Scan):
             )
 
 
+class AveragedScan(Scan):
+    """The scanned object changes over time but we're interested in time-averages."""
+
+    def __init__(
+        self,
+        name,
+        detector,
+        projs_dir,
+        proj_start: int,
+        proj_stop: int,
+        proj_step: int = 1,
+        **kwargs,
+    ):
+        assert proj_stop > proj_start > 0
+        self.proj_start = proj_start
+        self.proj_stop = proj_stop
+        self.proj_step = proj_step
+        projs = list(range(proj_start, proj_stop, proj_step))
+        super().__init__(name, detector, projs_dir, projs, **kwargs)
+
+    def geometry(self):
+        if self._geometry_manual:
+            geoms = _manual_geometry(self.cameras, nr_projs=1)
+            return [g[0] for g in geoms]  # flattening
+
+        if self._geometry:
+            return cate_to_astra(
+                self._geometry,
+                self.detector,
+                self._geometry_scaling_factor,
+            )
+
+
 class TraverseScan(DynamicScan):
     def __init__(self, *args, timeframes, motor_velocity, **kwargs):
         self.timeframes = timeframes
@@ -279,7 +329,15 @@ class TraverseScan(DynamicScan):
 
 
 class FluidizedBedScan(DynamicScan):
-    def __init__(self, *args, liter_per_min, **kwargs):
+    def __init__(self,
+                 name,
+                 detector,
+                 projs_dir,
+                 proj_start: int,
+                 proj_stop: int,
+                 proj_step: int = 1,
+                 liter_per_min=None,
+                 **kwargs):
         self.liter_per_min = liter_per_min
         assert 'is_rotational' not in kwargs or kwargs[
             'is_rotational'] is False, ("FluidizedBedScan is not rotational.")
@@ -287,4 +345,11 @@ class FluidizedBedScan(DynamicScan):
             "FluidizedBedScan is always with full column.")
         kwargs['is_full'] = True
         kwargs['is_rotational'] = False
-        super().__init__(*args, **kwargs)
+
+        assert proj_stop > proj_start > 0
+        self.proj_start = proj_start
+        self.proj_stop = proj_stop
+        self.proj_step = proj_step
+        projs = list(range(proj_start, proj_stop, proj_step))
+
+        super().__init__(name, detector, projs_dir, projs, **kwargs)

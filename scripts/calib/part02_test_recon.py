@@ -1,54 +1,76 @@
+import yaml
+import warnings
 import matplotlib.pyplot as plt
 import pyqtgraph as pq
+import numpy as np
+from pathlib import Path
 
 import cate.astra as cate_astra
-from cate.util import plot_projected_markers
+import cate.xray as xray
+from cate.util import geoms_from_interpolation, plot_projected_markers
 from fbrct.reco import AstraReconstruction
 from scripts.calib.util import *
-from scripts.settings import *
 
-detector = cate_astra.Detector(DETECTOR_ROWS, DETECTOR_COLS,
-                               DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT)
+with open("./calib.yaml") as calib_yaml:
+    calib = yaml.safe_load(calib_yaml)
 
-# directory of the calibration scan
-DATA_DIR_CALIB = "/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
-MAIN_DIR_CALIB = "pre_proc_VROI500_1000_Cal_20degsec"
+# Extract physical setup fromyaml
+SOURCE_RADIUS = calib["source_radius"]
+DETECTOR_RADIUS = calib["detector_radius"]
+DETECTOR_COLS = calib["detector_cols"]
+DETECTOR_ROWS = calib["detector_rows"]
+DETECTOR_COLS_SPEC = calib["detector_cols_spec"]
+DETECTOR_ROWS_SPEC = calib["detector_rows_spec"]
+DETECTOR_WIDTH_SPEC = calib["detector_width_spec"]
+DETECTOR_HEIGHT_SPEC = calib["detector_height_spec"]
+DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS       # cm
+DETECTOR_HEIGHT = DETECTOR_HEIGHT_SPEC / DETECTOR_ROWS_SPEC * DETECTOR_ROWS     # cm
+DETECTOR_PIXEL_WIDTH = DETECTOR_WIDTH / DETECTOR_COLS
+DETECTOR_PIXEL_HEIGHT = DETECTOR_HEIGHT / DETECTOR_ROWS
+DETECTOR_PIXEL_SPEC = calib['detector_pixel_spec']
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_HEIGHT < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel height ({DETECTOR_PIXEL_HEIGHT:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
+if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_WIDTH < DETECTOR_PIXEL_SPEC * 1.01:
+    warnings.warn(f"\n\nCalculated pixel width ({DETECTOR_PIXEL_WIDTH:.3e}) has"
+                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
 
-# directory of a scan to reconstruct (can be different or same to calib)
-DATA_DIR = "/run/media/adriaan/Elements/ownCloud_Sophia_SBI/VROI500_1000/"
-MAIN_DIR = "pre_proc_VROI500_1000_Cal_20degsec"
-PROJS_PATH = f'{DATA_DIR}/{MAIN_DIR}'
+detector = cate_astra.Detector(
+    DETECTOR_ROWS, DETECTOR_COLS, DETECTOR_PIXEL_WIDTH, DETECTOR_PIXEL_HEIGHT
+)
 
-# configure which projection range to take
-if MAIN_DIR == "pre_proc_3x10mm_foamballs_vertical_01":
-    proj_start = 37
-    proj_end = 1621
-    ref_path = '/home/adriaan/ownCloud3/pre_proc_Full_30degsec_03'
-    nr_projs = proj_end - proj_start
-elif MAIN_DIR == "pre_proc_Calibration_needle_phantom_30degsec_table474mm":
-    proj_start = 39
-    proj_end = 813  # or 814, depending on who you ask
-    ref_path = '/home/adriaan/ownCloud3/pre_proc_Brightfield'
-    nr_projs = proj_end - proj_start
-elif MAIN_DIR == "pre_proc_VROI500_1000_Cal_20degsec":
-    nr_projs = 1371  # a guess
-else:
-    raise Exception()
+""" 1. Extract calibration folder and settings from yaml."""
+root = Path(calib["root"])
+calib_folder = calib["calibration_folder"]
+PROJS_PATH = root / calib_folder
 
-# postfix of stored claibration
-POSTFIX = f'{MAIN_DIR_CALIB}_calibrated_on_13june2023'
+proj_start = calib["rotation"]["start"]
+proj_end = calib["rotation"]["stop"]
+nr_projs = proj_end - proj_start
+x = calib['frames']['start']
+n = calib['frames']['n']
+t_annotated = []
+for i in range(n):
+    t_annotated.append(int(x + i * nr_projs / n))
 
-t = [497, 958, 1223]
-t_annotated = [497, 958, 1223]
+mirrored = calib["images_mirrored"]
 
+for t in t_annotated:
+    assert proj_start <= t < proj_end, f"{t} is not within proj start-end."
+
+recon_step = calib["reconstruction"]["step"]
+t_range = range(proj_start, proj_end, recon_step)
+
+calib_path = root / "calib" / calib_folder
 # restore calibration
-multicam_geom = np.load(f'multicam_geom_{POSTFIX}.npy', allow_pickle=True)
-markers = np.load(f'markers_{POSTFIX}.npy', allow_pickle=True).item()
+multicam_geom = np.load(calib_path / 'multicam_geom.npy', allow_pickle=True)
+markers = np.load(calib_path / 'markers.npy', allow_pickle=True).item()
 
 multicam_data = annotated_data(
     PROJS_PATH,
     t_annotated,
-    fname=MAIN_DIR,
+    fname="needles",
+    resource_path=calib_path,
     cameras=[1, 2, 3],
     open_annotator=False,  # set to `True` if images have not been annotated
     vmin=6.0,
@@ -56,51 +78,53 @@ multicam_data = annotated_data(
 )
 cate_astra.pixels2coords(multicam_data, detector)  # convert to physical coords
 
-# for d1, d2 in zip(multicam_data[3],
-#                   xray.xray_multigeom_project(multicam_geom, markers)):
-#     plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
-#
+# for cam in range(1, 4):
+#     for d1, d2 in zip(multicam_data[cam],
+#                     xray.xray_multigeom_project(multicam_geom[cam - 1], markers)):
+#         plot_projected_markers(d1, d2, det=detector, det_padding=1.2)
+
 
 detector_cropped = cate_astra.crop_detector(detector, 0)
 reco = AstraReconstruction(PROJS_PATH, detector_cropped.todict())
 
 all_geoms = []
 all_projs = []
-for cam_id in range(1, 2):
-    # geoms_interp = geoms_from_interpolation(
-    #     interpolation_geoms=multicam_geom[cam_id - 1],
-    #     interpolation_nrs=t,
-    #     interpolation_calibration_nrs=t_annotated,
-    #     plot=False)
-    all_geoms.extend(multicam_geom[cam_id - 1])
-    projs = reco.load_sinogram(t_range=t, cameras=[cam_id],
-                               ref_full=True)
+for cam_id in range(1, 4):
+    geoms_interp = geoms_from_interpolation(
+        interpolation_geoms=multicam_geom[cam_id - 1],
+        interpolation_nrs=t_range,
+        interpolation_calibration_nrs=t_annotated,
+        plot=False)
+    all_geoms.extend(geoms_interp)
+
+    projs = reco.load_sinogram(t_range=t_range, cameras=[cam_id],
+                               ref_full=False, time="resolved") # ref_rotational = True?
     projs = prep_projs(projs)
     all_projs.append(projs)
-all_projs = np.concatenate(all_projs, axis=0)
 
+if len(all_projs[0].shape) < 3:
+    all_projs = np.array(all_projs).swapaxes(1, 2)
+else:
+    all_projs = np.concatenate(all_projs, axis=1).swapaxes(0, 1)
+
+scaling = 1.5
 vol_id, vol_geom = astra_reco_rotation_singlecamera(
-    reco, all_projs, all_geoms, 'FDK', [100 * 3, 100 * 3, 200 * 3], 0.025 * 2)
+    reco,
+    all_projs,
+    all_geoms,
+    'fdk',
+    [int(1500/scaling), int(1500/scaling), int(1500/scaling)],
+    0.016 * scaling,
+    max_constraint=1.0,
+    r=int(20/2/(0.016*scaling)),
+    iters=200
+    )
 x = reco.volume(vol_id)
 x = np.transpose(x, (2, 1, 0))
 print(x.shape)
 pq.image(x)
 plt.figure()
+plt.imshow(x[300, :, :])
 plt.show()
-
-for res_cam_id in range(1, 4):
-    projs_annotated = reco.load_sinogram(
-        t_range=t_annotated,
-        cameras=[res_cam_id])
-    projs_annotated = prep_projs(projs_annotated)
-    res = astra_residual(reco,
-                         projs_annotated, vol_id, vol_geom,
-                         multicam_geom[res_cam_id - 1])
-    plot_projections(res, title='res')
-    plot_projections(projs_annotated, title='projs')
-    plot_projections(astra_project(
-        reco, vol_id, vol_geom,
-        multicam_geom[res_cam_id - 1]), title='reprojs')
-    plt.show()
 
 reco.clear()
