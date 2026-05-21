@@ -11,10 +11,9 @@ from scripts.calib.util import (
     triple_camera_circular_geometry,
     marker_optimization,
     markers_from_leastsquares_intersection)
-# TODO find a way to avoid import * statements.
 
 
-with open("./calib.yaml") as calib_yaml:
+with open(R"D:\XRay\Database\Nov-2024_alcohols-acids\calib.yaml") as calib_yaml:
     calib = yaml.safe_load(calib_yaml)
 
 # Extract physical setup fromyaml
@@ -63,8 +62,7 @@ for t in t_annotated:
 
 
 """ 2. Annotate the projections, for a description of markers, see `util.py`"""
-# [ ] change folder to 00_calib
-res_path = Path(root.parent / "calib" / calib_folder)
+res_path = Path(root.parent / "00_calib" / calib_folder)
 if not res_path.is_dir():
     res_path.mkdir(
         parents=True,       # Also make _all_ parent folders (no safety checks)

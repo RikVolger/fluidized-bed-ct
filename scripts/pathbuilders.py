@@ -33,7 +33,9 @@ def extensionless_filename(
         init: str = "flat",
         recon_size: dict = None,
         voxel_size: float = None,
-        mask_size: float = None) -> str:
+        mask_size: float = None,
+        time: str = None,
+        frame: str = None) -> str:
     """Build filename for the requested savefile."""
     filenameparts = ["recon"]
     if loss:
@@ -48,6 +50,10 @@ def extensionless_filename(
         filenameparts += ["bh-corrected"]
     if init != "flat":
         filenameparts += [f"init-{init}"]
+    if time:
+        filenameparts += [f"time-{time}"]
+    if frame:
+        filenameparts += [f"frame-{frame}"]
 
     filename = "_".join(filenameparts)
 
@@ -111,7 +117,8 @@ def hdf5_filename(
         init: str = "flat",
         recon_size: dict = None,
         voxel_size: float = None,
-        mask_size: float = None) -> str:
+        mask_size: float = None,
+        time: str = None) -> str:
     """Create filename with hdf5 extension. Relies mainly on `extensionless_filename()`"""
     filename = extensionless_filename(
         loss,
@@ -122,6 +129,36 @@ def hdf5_filename(
         init,
         recon_size,
         voxel_size,
-        mask_size) + ".hdf5"
+        mask_size,
+        time) + ".hdf5"
+
+    return filename
+
+
+def vtk_filename(
+        loss: bool = False,
+        volume: bool = False,
+        resolution: bool = False,
+        mask: bool = False,
+        bhc: bool = False,
+        init: str = "flat",
+        recon_size: dict = None,
+        voxel_size: float = None,
+        mask_size: float = None,
+        time: str = None,
+        frame: str = None) -> str:
+    """Create filename with hdf5 extension. Relies mainly on `extensionless_filename()`"""
+    filename = extensionless_filename(
+        loss,
+        volume,
+        resolution,
+        mask,
+        bhc,
+        init,
+        recon_size,
+        voxel_size,
+        mask_size,
+        time,
+        frame) + ".vtk"
 
     return filename

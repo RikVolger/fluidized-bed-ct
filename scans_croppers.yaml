@@ -1,0 +1,70 @@
+# Detector specs (shouldn't change)
+detector_cols_spec: 1548      # also those outside ROI
+detector_rows_spec: 1524      # also those outside ROI
+detector_width_spec: 30.7     # cm, also outside ROI
+detector_height_spec: 30.2    # cm, also outside ROI
+detector_pixel_spec: 0.0198   # cm
+
+# Setup properties (Measurements & Settings)
+# Expected to be the same for all measurements. If you change these half-way, 
+# you'll have to make a new yaml for the second part. If you want to change them
+# throughout your experiments, you'll have to rework the codebase a bit.
+source_radius: 93.7 
+detector_radius: 32.2
+detector_cols: 1548           # including ROI
+detector_rows: 1524           # including ROI
+column_inner_diameter: 19.2   # cm
+column_outer_diameter: 20.0   # cm
+calibration_file: u:\Xray RPT ChemE\X-ray\Xray_data\2025-06-13 Rik Cropper\calib\NeedleCalibration_5degps\geom.npy
+frames:
+  measurement:
+    start: 50
+    stop: 1300
+    step: 1
+  full:
+    start: 50
+    stop: 240
+    step: 1
+  empty:
+    start: 50
+    stop: 240
+    step: 1
+# Reconstruction settings
+time: averaged
+# time: resolved
+number_of_iterations: 20
+investigate_loss: True
+recon_volumes:  # in cm
+- side: 21
+  height: 15
+voxel_sizes:
+- 0.03
+mask_sizes:
+- 20
+initialize: flat  # 'flat', 'ones' or 'parabolic'
+# Measurements to reconstruct
+#############
+# If the same 'empty', 'dark', or 'full' can be used for all reconstructions:
+# Provide absolute paths here. These will be referred to in the next comments as
+# 'global paths'. They are overwritten if an experiment also has a day-path or
+# experiment-specific 'empty', 'dark' or 'full' measurement
+# empty: D:\XRay\1999-01-01 Evert\preprocessed_Empty
+dark: U:\Xray RPT ChemE\X-ray\Xray_data\2025-06-12 Rik Cropper\preprocessed\WideCrop_Dark_22Hz
+# full: D:\Xray\1999-01-01 Evert\preprocessed_Full
+# Per folder with measurements, which measurements to reconstruct
+measurements:
+# Comparing different power settings at the same crop
+- day: 13-06-2025
+  root: U:\Xray RPT ChemE\X-ray\Xray_data\2025-06-13 Rik Cropper\03_scattercorrected\
+  empty: WideCrop_Empty_120kV_22Hz
+  full: WideCrop_Full_120kV_22Hz
+  reconstructions:
+  - measured: WideCrop_30lmin_120kV_22Hz
+    empty: WideCrop_Empty_120kV_22Hz
+    full: WideCrop_Full_120kV_22Hz
+  - measured: WideCrop_30lmin_135kV_22Hz
+    empty: WideCrop_Empty_135kV_22Hz
+    full: WideCrop_Full_135kV_22Hz
+  - measured: WideCrop_30lmin_150kV_22Hz
+    empty: WideCrop_Empty_150kV_22Hz
+    full: WideCrop_Full_150kV_22Hz
