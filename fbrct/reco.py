@@ -5,16 +5,10 @@ from typing import Any
 import numpy as np
 import warnings
 
-from joblib import Memory
-
 from fbrct.loader import (
     _apply_darkfields, _scatter_correct,
     reference_via_mode, compute_bed_density, load, preprocess)
 
-# we use joblibs `Memory` to cache long results
-# path = pathlib.Path(__file__).parent.resolve()
-# cachedir = str(path.parent / "cache")
-# memory = Memory(cachedir, verbose=0)
 
 def _astra_fdk_algo(volume_geom, projection_geom, volume_id, sinogram_id):
     import astra
@@ -100,7 +94,6 @@ class Reconstruction:
         return reduced
 
     @staticmethod
-    # @memory.cache
     def _compute_or_restore_ref(ref_path,
                                 ref_projs,
                                 ref_full,
@@ -117,13 +110,6 @@ class Reconstruction:
                                 col_inner_diameter,
                                 scatter_mean_full,
                                 scatter_mean_empty):
-        """This function avoids loading the entire stack of files when
-        the reference is already computed and stored by using the
-        @memory.cache decorator. If you need to recompute, delete files
-        in ../cache/joblib/fbrct/reco.
-        NOTE: @memory.cache decorator is currently commented out because Rik 
-        spent way too much time finding out why an update of the data didn't 
-        update the reconstructions. Twice."""
 
         ref = load(ref_path, ref_projs, **load_kwargs)
         if dark is not None:
