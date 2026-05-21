@@ -42,12 +42,12 @@ def _collect_fnames(
 
                 tmp_result = [None] * len(groups)
                 for i, group in enumerate(groups):
-                    if not group.isdigit():
+                    if group.isdigit():
+                        tmp_result[i] = int(group)
+                    else:
                         raise Exception(
                             "The regex captured a non-digit, cannot proceed."
                         )
-
-                    tmp_result[i] = int(group)
 
                 results.append(tmp_result)
                 results_filenames.append(full_filename)
