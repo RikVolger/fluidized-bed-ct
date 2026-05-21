@@ -2,37 +2,45 @@
 
 Reconstruction scripts for the TU Delft triple source-detector set-up. The 
 scripts allow
- - a calibration of the set-up, using _Cate_, see _scripts/calib/_;
+ - a calibration of the set-up, using `CaTE`, see `scripts/calib/`;
  - reconstruction of a static object, using a rotation table;
  - preprocessing and referencing;
- - reconstruction of a dynamic fluidized bed, using three angles per timestep.
+ - reconstruction of a dynamic fluidized bed, using three angles per timestep;
+ - reconstruction of a time-averaged fluidized bed / bubble column.
 
 ## 1. Installation
 If you don't have _conda_ installed, find some installation instructions
 [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). 
 Do **not** use the TU Delft Software Center version of anaconda.
 
-### 1.1. Rapid install
 The fastest way of installing is to clone this repository and create a `conda`
-environment from the `requirements.yaml` file in there. A working conda
-environment has been exported into this file, so functionality is guaranteed,
-probably (for Windows).
+environment from the `requirements.yaml` file in there. All explicitly installed 
+packages have been exported there so there's a good chance conda can make a 
+functional environment out of it.
 
+### 1.1. Cloning
 In the terminal, navigate to a folder where you want to keep the code
 (preferable local, on the `C:` drive \[for Windows\]). There, download this
 repository:
 ```shell
 git clone https://github.com/RikVolger/fluidized-bed-ct.git
 ```
-You can then install the environment specified in requirements.txt as a new 
+### 1.2. Create `conda` environment
+You can then install the environment specified in requirements.yaml as a new 
 environment:
 ```shell
 cd path/to/fluidized-bed-ct
-conda env create -f environment.yaml
+conda env create -f requirements.yaml
 conda activate fluidized_bed_ct
 conda develop .
 ```
+> **_NOTE:_**  There's also the `environment.yaml` file. This is a full export 
+> of the working environment on a specific computer that leaves no freedom to 
+> `conda` when creating the environment. It's unlikely that this can be used to 
+> create a functional environment on your machine, but it can be used to trace 
+> down version-dependent errors.
 
+### 1.3. Install _CaTE_ dependency
 Now, install the _CaTE_ package:
 ```shell
 cd path/to/fluidized-bed-ct
@@ -43,7 +51,7 @@ conda activate fluidized_bed_ct
 conda develop .
 ```
 
-### 1.2. Less rapid install
+<!-- ### 1.x. Legacy install
 Below the 'legacy' instructions for installation. It will potentially use newer
 versions of packages, which might or might not work.
 For an installation with _conda_ (or _mamba_, preferred), open a terminal window
@@ -80,7 +88,7 @@ cd ../
 git clone https://github.com/adriaangraas/cate
 cd cate
 conda develop .
-```
+``` -->
 
 ## 2. Run a calibration
 
@@ -128,3 +136,17 @@ since 3 detectors are used for a rotational scan. To reconstruct the object, the
 geometry parameters of all not-annotated projections can be found by
 interpolation in the direction of rotation. If the reconstructed object 
 (especially the needles) looks sharp, the geometry parameters are likely correct.
+
+The third file, `part03_amend.py` serves some forgotten function and has not 
+seen any use in a few years.
+
+## 3. Reconstruct your measurements
+The heart of the reconstructions is the file `scripts/reco_from_yaml.py`. This 
+file uses a `scans_###.yaml` input file from the root directory, indicated in 
+line 199. 
+
+The file `scans_example.yaml` contains a number of examples of what the input 
+could look like. 
+
+The output of the reconstructions are .vtk files that can be used for 
+visualization in ParaView (for fancy videos) or Python (for simpler images).

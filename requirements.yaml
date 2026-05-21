@@ -9,7 +9,6 @@ dependencies:
   - scipy
   - imageio
   - matplotlib
-  - joblib
   - tqdm
   - pyqtgraph
   - conda-build
