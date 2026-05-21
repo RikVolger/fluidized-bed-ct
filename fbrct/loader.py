@@ -272,7 +272,8 @@ def compute_bed_density(empty, ref, L: float, nr_bins=1000,
     # computing log(ref/meas) / log(ref)
     # should be normalized between 0 and 1
     np.clip(empty, 1.0, None, out=empty)
-    bed = np.log(empty / ref, where=ref != 0)
+    # Avoid divide by zero and have 1.0 in these locations.
+    bed = np.log(empty / ref, where=ref != 0, out=np.ones_like(empty))
         
     # This is an annoying value that I need to have in here, because sometimes
     # pieces of metal appear in the bed and they have huge attenuation. In such
