@@ -11,8 +11,8 @@ detector_pixel_spec: 0.0198   # cm
 # throughout your experiments, you'll have to rework the codebase a bit.
 source_radius: 88.5 
 detector_radius: 32.1
-detector_cols: 1548           # including ROI
-detector_rows: 1524           # including ROI
+detector_cols: 1548           # Number of columns in the image files
+detector_rows: 1524           # Number of rows in the image files
 column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
 calibration_file: D:\XRay\1999-01-01 Evert\preprocessed_Rotation_needles_5degps\calibration\geom_preprocessed_Rotation_needles_5degps_again_calibrated_on_1jan1999.npy
@@ -36,6 +36,13 @@ frames:
 # Reconstruction settings
 time: averaged
 # time: resolved
+# ref_reduction determines how the time resolution is reduced from the 
+# reference (full) image. Accepts 'mean', 'median', 'min', 'mode'. 'median' is 
+# likely the most robust approach.
+ref_reduction: median
+empty_reduction: median
+# Set the number of SIRT iterations. Higher is not always better, at some point 
+# the algorithm starts fitting to noise.
 number_of_iterations: 20
 investigate_loss: False
 recon_volumes:  # in cm

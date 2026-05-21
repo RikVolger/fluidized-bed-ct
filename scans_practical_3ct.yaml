@@ -36,6 +36,11 @@ frames:
 # Reconstruction settings
 time: averaged
 # time: resolved
+# ref_reduction determines how the time resolution is reduced from the 
+# full image. Accepts 'mean', 'median', 'min', 'mode'. 'median' is likely the
+# most robust approach.
+ref_reduction: median
+empty_reduction: median
 number_of_iterations: 20
 investigate_loss: True
 recon_volumes:  # in cm

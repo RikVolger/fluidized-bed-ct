@@ -200,6 +200,7 @@ with open(R"C:\Users\rikvolger\Codebase\fluidized-bed-ct\scans_practical_3ct.yam
     scans = yaml.safe_load(scans_yaml)
 
 PLOTTING = False
+VERBOSE = True
 
 SOURCE_RADIUS = scans['source_radius']
 DETECTOR_RADIUS = scans['detector_radius']
@@ -209,26 +210,12 @@ DETECTOR_COLS_SPEC = scans['detector_cols_spec']
 DETECTOR_ROWS_SPEC = scans['detector_rows_spec']
 DETECTOR_WIDTH_SPEC = scans['detector_width_spec']
 DETECTOR_HEIGHT_SPEC = scans['detector_height_spec']
-DETECTOR_WIDTH = DETECTOR_WIDTH_SPEC / DETECTOR_COLS_SPEC * DETECTOR_COLS       # cm
-DETECTOR_HEIGHT = DETECTOR_HEIGHT_SPEC / DETECTOR_ROWS_SPEC * DETECTOR_ROWS     # cm
-DETECTOR_PIXEL_WIDTH = DETECTOR_WIDTH / DETECTOR_COLS
-DETECTOR_PIXEL_HEIGHT = DETECTOR_HEIGHT / DETECTOR_ROWS
 DETECTOR_PIXEL_SPEC = scans['detector_pixel_spec']
-if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_HEIGHT < DETECTOR_PIXEL_SPEC * 1.01:
-    warnings.warn(f"\n\nCalculated pixel height ({DETECTOR_PIXEL_HEIGHT:.3e}) has"
-                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
-if not DETECTOR_PIXEL_SPEC * 0.99 < DETECTOR_PIXEL_WIDTH < DETECTOR_PIXEL_SPEC * 1.01:
-    warnings.warn(f"\n\nCalculated pixel width ({DETECTOR_PIXEL_WIDTH:.3e}) has"
-                  f" more than 1% deviation with spec ({DETECTOR_PIXEL_SPEC:.3e})\n")
-APPROX_VOXEL_WIDTH = (
-    DETECTOR_PIXEL_WIDTH / (SOURCE_RADIUS + DETECTOR_RADIUS) * SOURCE_RADIUS)
-APPROX_VOXEL_HEIGHT = (
-    DETECTOR_PIXEL_HEIGHT / (SOURCE_RADIUS + DETECTOR_RADIUS) * SOURCE_RADIUS)
 DETECTOR = {
     "rows": DETECTOR_ROWS,
     "cols": DETECTOR_COLS,
-    "pixel_width": DETECTOR_PIXEL_WIDTH,
-    "pixel_height": DETECTOR_PIXEL_HEIGHT,
+    "pixel_width": DETECTOR_PIXEL_SPEC,
+    "pixel_height": DETECTOR_PIXEL_SPEC,
 }
 CALIBRATION_FILE = scans['calibration_file']
 FRAMES = scans['frames']
@@ -241,6 +228,8 @@ VOXEL_SIZES = scans['voxel_sizes']
 MASK_SIZES = scans['mask_sizes']
 INITIALIZATION = scans['initialize']
 TIME = scans['time']
+REF_REDUCTION = scans['ref_reduction']
+EMPTY_REDUCTION = scans['empty_reduction']
 
 """2. Configuration of pre-experiment scans. Use `StaticScan` for scans where
 the imaged object is not dynamic.
@@ -292,7 +281,7 @@ for day in scans['measurements']:
         timeframes = range(scan.proj_start, scan.proj_stop, scan.proj_step)
 
         ref = full
-        ref_reduction = 'median'
+        
         ref_path = ref.projs_dir
         ref_projs = list(range(ref.proj_start, ref.proj_stop, ref.proj_step))
         ref_rotational = ref.is_rotational
@@ -308,12 +297,13 @@ for day in scans['measurements']:
             t_range=timeframes,
             t_offsets=scan.projs_offset,
             ref_rotational=ref_rotational,
-            ref_reduction=ref_reduction,
+            ref_reduction=REF_REDUCTION,
             ref_path=ref_path,
             ref_projs=ref_projs,
             empty_path=empty.projs_dir,
             empty_rotational=empty.is_rotational,
             empty_projs=[p for p in range(empty.proj_start, empty.proj_stop)],
+            empty_reduction=EMPTY_REDUCTION,
             # darks_ran=range(frames['dark']['start'], frames['dark']['stop']),
             # darks_path=ref_paths['dark'],
             ref_full=ref.is_full,
@@ -322,6 +312,8 @@ for day in scans['measurements']:
             # scatter_mean_full=600,
             # scatter_mean_empty=500,
             time=TIME,
+            img_shape=(DETECTOR['rows'], DETECTOR['cols']),
+            verbose=VERBOSE
         )
 
         algo = 'sirt'

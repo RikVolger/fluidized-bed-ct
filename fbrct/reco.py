@@ -120,7 +120,10 @@ class Reconstruction:
         """This function avoids loading the entire stack of files when
         the reference is already computed and stored by using the
         @memory.cache decorator. If you need to recompute, delete files
-        in ../cache/joblib/fbrct/reco."""
+        in ../cache/joblib/fbrct/reco.
+        NOTE: @memory.cache decorator is currently commented out because Rik 
+        spent way too much time finding out why an update of the data didn't 
+        update the reconstructions. Twice."""
 
         ref = load(ref_path, ref_projs, **load_kwargs)
         if dark is not None:
@@ -175,7 +178,7 @@ class Reconstruction:
         darks_ran: range = None,
         empty_path=None,
         empty_rotational=False,
-        empty_reduction='mean',
+        empty_reduction=None,
         empty_projs: range = None,
         detector_rows: range = None,
         density_factor: float = None,
@@ -183,6 +186,8 @@ class Reconstruction:
         scatter_mean_full: float = 0.0,
         scatter_mean_empty: float = 0.0,
         time: str = "averaged",
+        img_shape: tuple = (1524, 1548),
+        verbose: bool = False,
     ):
         """Loads and preprocesses the sinogram."""
 
@@ -198,6 +203,8 @@ class Reconstruction:
             load_kwargs["average"] = True
         elif time == "resolved":
             load_kwargs["average"] = False
+        load_kwargs["img_shape"] = img_shape
+        load_kwargs["verbose"] = verbose
 
         dark = None
         if darks_path is not None:
@@ -239,7 +246,8 @@ class Reconstruction:
         _scatter_correct(meas, scatter_mean_full)
         meas = preprocess(meas, ref,
                           ref_full=ref_full,
-                          density_factor=density_factor)
+                          density_factor=density_factor,
+                          average=load_kwargs["average"])
         return np.ascontiguousarray(meas.astype(np.float32))
 
     @staticmethod
