@@ -12,6 +12,10 @@ from fbrct import loader, reco, StaticScan, AveragedScan
 from fbrct.scan import FluidizedBedScan
 from scripts.pathbuilders import vtk_filename
 
+
+# TODO Dark should never be used in this context. Find all references to dark 
+# and remove them to avoid confusion. Dark is now always handled in 
+# pre-processing (3ct-tools).
 """0. Helper functions"""
 
 
