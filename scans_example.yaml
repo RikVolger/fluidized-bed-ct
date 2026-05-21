@@ -16,23 +16,6 @@ detector_rows: 1524           # Number of rows in the image files
 column_inner_diameter: 19.2   # cm
 column_outer_diameter: 20.0   # cm
 calibration_file: D:\XRay\1999-01-01 Evert\preprocessed_Rotation_needles_5degps\calibration\geom_preprocessed_Rotation_needles_5degps_again_calibrated_on_1jan1999.npy
-frames:
-  measurement:
-    start: 10
-    stop: 2600
-    step: 1
-  full:
-    start: 10
-    stop: 200
-    step: 1
-  empty:
-    start: 10
-    stop: 200
-    step: 1
-  dark:
-    start: 10
-    stop: 100
-    step: 1
 # Reconstruction settings
 time: averaged
 # time: resolved
@@ -53,15 +36,34 @@ voxel_sizes:
 mask_sizes:
 - 20
 initialize: flat  # 'flat', 'ones' or 'parabolic'
+# Selection of frames to use for each type of scan. These can be overwritten for
+# individual experiments or days.
+frames:
+  measurement:
+    start: 10
+    stop: 2600
+    step: 1
+  full:
+    start: 10
+    stop: 200
+    step: 1
+  empty:
+    start: 10
+    stop: 200
+    step: 1
+  dark:
+    start: 10
+    stop: 100
+    step: 1
 # Measurements to reconstruct
 #############
 # If the same 'empty', 'dark', or 'full' can be used for all reconstructions:
 # Provide absolute paths here. These will be referred to in the next comments as
 # 'global paths'. They are overwritten if an experiment also has a day-path or
 # experiment-specific 'empty', 'dark' or 'full' measurement
-# empty: D:\XRay\1999-01-01 Evert\preprocessed_Empty
-# dark: D:\Xray\1999-01-01 Evert\preprocessed_Dark
-# full: D:\Xray\1999-01-01 Evert\preprocessed_Full
+empty: D:\XRay\1999-01-01 Evert\preprocessed_Empty
+dark: D:\Xray\1999-01-01 Evert\preprocessed_Dark
+full: D:\Xray\1999-01-01 Evert\preprocessed_Full
 # Per folder with measurements, which measurements to reconstruct
 measurements:
 # Example with single empty, full and dark measurements for all experiments
@@ -125,6 +127,8 @@ measurements:
 - day: 04-01-1999
   root: D:\XRay\1999-01-04 Evert
   reconstructions:
+  # Here we use different sequences from the same file, e.g. to investigate two 
+  # distinct bubble events.
   - measured: preprocessed_Water_10lmin
     frames:
       measurement:
