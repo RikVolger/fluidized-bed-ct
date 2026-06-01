@@ -200,7 +200,7 @@ def get_frames(exp_frames, day_frames, global_frames, exp):
 
 """1. Configuration of set-up and calibration"""
 # load scans.yaml
-with open(R"C:\Users\rikvolger\Codebase\fluidized-bed-ct\scans_practical_3ct.yaml") as scans_yaml:
+with open(R"D:\XRay\3ct_data\recon_practical_3ct.yaml") as scans_yaml:
     scans = yaml.safe_load(scans_yaml)
 
 PLOTTING = False
@@ -297,6 +297,7 @@ for day in scans['measurements']:
             scan.projs_dir,
             detector=scan.detector)
 
+        tic = time.perf_counter()
         sino = recon.load_sinogram(
             t_range=timeframes,
             t_offsets=scan.projs_offset,
@@ -319,6 +320,8 @@ for day in scans['measurements']:
             img_shape=(DETECTOR['rows'], DETECTOR['cols']),
             verbose=VERBOSE
         )
+        toc = time.perf_counter()
+        print(f"Loading sinograms took {toc-tic:.0f} seconds")
 
         algo = 'sirt'
         for i, sino_t in enumerate(sino):
@@ -328,7 +331,7 @@ for day in scans['measurements']:
                 frame = f"{scan.proj_start} - {scan.proj_stop}"
             else:
                 raise ValueError("Time can either be 'resolved' or 'averaged', "
-                                 "not whatever you chose. Redo your yaml file.")
+                                 f"not {TIME}. Redo your yaml file.")
             for recon_size, voxel_size, mask_size in itertools.product(RECON_VOLUMES, VOXEL_SIZES, MASK_SIZES):
                 # Investigating change in recon volume doesn't add much if the mask is kept the same.
                 # Mask size is overridden in these cases.
@@ -372,6 +375,8 @@ for day in scans['measurements']:
                 if 'output' in experiment.keys():
                     output_path = Path(day['root'], experiment['output'])
                 else:
+                    raise ValueError("No field 'output' found in the yaml " \
+                                     f"settings for {exp_path}")
                     output_path = exp_path.parent.parent / f"10_reconstructions/{exp_path.name}"
                 output_path.mkdir(parents=True, exist_ok=True)
 
@@ -385,8 +390,11 @@ for day in scans['measurements']:
                 grid.user_dict = dataset_attributes
 
                 print(f"Saving {full_path}\n")
-
+                
+                tic = time.perf_counter()
                 grid.save(str(full_path))
+                toc = time.perf_counter()
+                print(f"Writing frame took {toc-tic:.0f} seconds")
 
                 if INVESTIGATING_LOSS and PLOTTING:
                     plt.plot(loss)
