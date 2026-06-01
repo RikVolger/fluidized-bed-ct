@@ -1,4 +1,3 @@
-import pathlib
 from abc import abstractmethod
 from typing import Any
 
@@ -6,7 +5,6 @@ import numpy as np
 import warnings
 
 from fbrct.loader import (
-    _apply_darkfields, _scatter_correct,
     reference_via_mode, compute_bed_density, load, preprocess)
 
 
@@ -112,11 +110,7 @@ class Reconstruction:
                                 scatter_mean_empty):
 
         ref = load(ref_path, ref_projs, **load_kwargs)
-        if dark is not None:
-            _apply_darkfields(dark, ref)
-        _scatter_correct(ref,
-                         scatter_mean_full if ref_full else scatter_mean_empty)
-
+        
         if not ref_rotational:
             assert ref_reduction is not None
             ref = Reconstruction._reduce_ref(ref, ref_reduction, detector_rows)
@@ -131,10 +125,7 @@ class Reconstruction:
                     "Column diameter needs to be known to compute empty"
                     " density factor.")
                 empty = load(empty_path, empty_projs, **load_kwargs)
-                if dark is not None:
-                    _apply_darkfields(dark, empty)
-                _scatter_correct(empty, scatter_mean_empty)
-
+                
                 if not empty_rotational:
                     assert empty_reduction is not None
                     empty = Reconstruction._reduce_ref(empty, empty_reduction,
@@ -227,9 +218,6 @@ class Reconstruction:
             density_factor = np.ones_like(ref)
 
         meas = load(self._path, t_range, t_offsets, **load_kwargs)
-        if dark is not None:
-            _apply_darkfields(dark, meas)
-        _scatter_correct(meas, scatter_mean_full)
         meas = preprocess(meas, ref,
                           ref_full=ref_full,
                           density_factor=density_factor,
